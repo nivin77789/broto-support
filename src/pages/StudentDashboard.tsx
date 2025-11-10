@@ -1,0 +1,280 @@
+import { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { Plus, LogOut, Filter } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import { ThemeToggle } from "@/components/ThemeToggle";
+import { ComplaintCard } from "@/components/ComplaintCard";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+import { z } from "zod";
+
+const categories = ["Technical", "Hostel", "Mentor", "Financial", "Infrastructure", "Other"];
+
+const complaintSchema = z.object({
+  title: z.string().trim().min(3, "Title must be at least 3 characters").max(200, "Title too long"),
+  category: z.enum(["Technical", "Hostel", "Mentor", "Financial", "Infrastructure", "Other"]),
+  description: z.string().trim().min(10, "Description must be at least 10 characters").max(2000, "Description too long"),
+});
+
+const StudentDashboard = () => {
+  const { user, signOut } = useAuth();
+  const [complaints, setComplaints] = useState<any[]>([]);
+  const [filteredComplaints, setFilteredComplaints] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [open, setOpen] = useState(false);
+  const [selectedComplaint, setSelectedComplaint] = useState<any>(null);
+  const [filterStatus, setFilterStatus] = useState<string>("all");
+
+  const [formData, setFormData] = useState({
+    title: "",
+    category: "",
+    description: "",
+  });
+
+  useEffect(() => {
+    fetchComplaints();
+  }, [user]);
+
+  useEffect(() => {
+    if (filterStatus === "all") {
+      setFilteredComplaints(complaints);
+    } else {
+      setFilteredComplaints(complaints.filter(c => c.status === filterStatus));
+    }
+  }, [filterStatus, complaints]);
+
+  const fetchComplaints = async () => {
+    if (!user) return;
+
+    try {
+      const { data, error } = await supabase
+        .from("complaints")
+        .select("*")
+        .eq("student_id", user.id)
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+      setComplaints(data || []);
+      setFilteredComplaints(data || []);
+    } catch (error: any) {
+      toast.error("Failed to fetch complaints");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    try {
+      const validatedData = complaintSchema.parse(formData);
+
+      const { error } = await supabase.from("complaints").insert({
+        student_id: user?.id,
+        title: validatedData.title,
+        category: validatedData.category,
+        description: validatedData.description,
+      });
+
+      if (error) throw error;
+
+      toast.success("Complaint submitted successfully!");
+      setOpen(false);
+      setFormData({ title: "", category: "", description: "" });
+      fetchComplaints();
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        toast.error(error.errors[0].message);
+      } else {
+        toast.error("Failed to submit complaint");
+      }
+    }
+  };
+
+  const getStatusCount = (status: string) => {
+    return complaints.filter(c => c.status === status).length;
+  };
+
+  return (
+    <div className="min-h-screen bg-background">
+      <header className="border-b bg-card">
+        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold bg-gradient-primary bg-clip-text text-transparent">
+              Student Portal
+            </h1>
+            <p className="text-sm text-muted-foreground mt-1">Manage your complaints</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <ThemeToggle />
+            <Button variant="ghost" size="icon" onClick={signOut}>
+              <LogOut className="h-5 w-5" />
+            </Button>
+          </div>
+        </div>
+      </header>
+
+      <main className="container mx-auto px-4 py-8">
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-2">
+            <Filter className="h-5 w-5 text-muted-foreground" />
+            <Select value={filterStatus} onValueChange={setFilterStatus}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Filter by status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All ({complaints.length})</SelectItem>
+                <SelectItem value="Pending">Pending ({getStatusCount("Pending")})</SelectItem>
+                <SelectItem value="In Review">In Review ({getStatusCount("In Review")})</SelectItem>
+                <SelectItem value="Resolved">Resolved ({getStatusCount("Resolved")})</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <Dialog open={open} onOpenChange={setOpen}>
+            <DialogTrigger asChild>
+              <Button className="bg-gradient-primary">
+                <Plus className="h-4 w-4 mr-2" />
+                New Complaint
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-2xl">
+              <DialogHeader>
+                <DialogTitle>Submit New Complaint</DialogTitle>
+              </DialogHeader>
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="title">Title</Label>
+                  <Input
+                    id="title"
+                    value={formData.title}
+                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                    placeholder="Brief description of the issue"
+                    required
+                    maxLength={200}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="category">Category</Label>
+                  <Select
+                    value={formData.category}
+                    onValueChange={(value) => setFormData({ ...formData, category: value })}
+                    required
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select category" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {categories.map((cat) => (
+                        <SelectItem key={cat} value={cat}>
+                          {cat}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="description">Description</Label>
+                  <Textarea
+                    id="description"
+                    value={formData.description}
+                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                    placeholder="Detailed description of your complaint"
+                    rows={6}
+                    required
+                    maxLength={2000}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    {formData.description.length}/2000 characters
+                  </p>
+                </div>
+
+                <Button type="submit" className="w-full bg-gradient-primary">
+                  Submit Complaint
+                </Button>
+              </form>
+            </DialogContent>
+          </Dialog>
+        </div>
+
+        {loading ? (
+          <div className="flex justify-center items-center h-64">
+            <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+          </div>
+        ) : filteredComplaints.length === 0 ? (
+          <div className="text-center py-16">
+            <p className="text-muted-foreground mb-4">
+              {filterStatus === "all" ? "No complaints yet" : `No ${filterStatus.toLowerCase()} complaints`}
+            </p>
+            {filterStatus === "all" && (
+              <Button onClick={() => setOpen(true)} className="bg-gradient-primary">
+                <Plus className="h-4 w-4 mr-2" />
+                Create Your First Complaint
+              </Button>
+            )}
+          </div>
+        ) : (
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {filteredComplaints.map((complaint) => (
+              <ComplaintCard
+                key={complaint.id}
+                complaint={complaint}
+                onClick={() => setSelectedComplaint(complaint)}
+              />
+            ))}
+          </div>
+        )}
+
+        <Dialog open={!!selectedComplaint} onOpenChange={() => setSelectedComplaint(null)}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>{selectedComplaint?.title}</DialogTitle>
+            </DialogHeader>
+            {selectedComplaint && (
+              <div className="space-y-4">
+                <div className="flex gap-2">
+                  <Badge variant="outline">{selectedComplaint.category}</Badge>
+                  <Badge variant="outline">{selectedComplaint.status}</Badge>
+                </div>
+                <div>
+                  <Label>Description</Label>
+                  <p className="mt-2 text-sm">{selectedComplaint.description}</p>
+                </div>
+                {selectedComplaint.resolution_note && (
+                  <div>
+                    <Label>Resolution</Label>
+                    <p className="mt-2 text-sm bg-success/10 p-3 rounded-lg border border-success/20">
+                      {selectedComplaint.resolution_note}
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
+      </main>
+    </div>
+  );
+};
+
+export default StudentDashboard;

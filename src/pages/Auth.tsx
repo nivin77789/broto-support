@@ -1,0 +1,164 @@
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card } from "@/components/ui/card";
+import { useAuth } from "@/contexts/AuthContext";
+import { ThemeToggle } from "@/components/ThemeToggle";
+import { toast } from "sonner";
+import { AlertCircle } from "lucide-react";
+import { z } from "zod";
+
+const authSchema = z.object({
+  email: z.string().trim().email("Invalid email address").max(255, "Email too long"),
+  password: z.string().min(6, "Password must be at least 6 characters"),
+  name: z.string().trim().min(2, "Name must be at least 2 characters").max(100, "Name too long").optional(),
+});
+
+const Auth = () => {
+  const [isSignUp, setIsSignUp] = useState(false);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [name, setName] = useState("");
+  const [loading, setLoading] = useState(false);
+  const { signUp, signIn, user, userRole } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (user && userRole) {
+      navigate(userRole === "admin" ? "/admin" : "/student");
+    }
+  }, [user, userRole, navigate]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+
+    try {
+      const validatedData = authSchema.parse({
+        email,
+        password,
+        name: isSignUp ? name : undefined,
+      });
+
+      const { error } = isSignUp
+        ? await signUp(validatedData.email, validatedData.password, validatedData.name || "")
+        : await signIn(validatedData.email, validatedData.password);
+
+      if (error) {
+        if (error.message.includes("already registered")) {
+          toast.error("This email is already registered. Please sign in instead.");
+        } else {
+          toast.error(error.message || "Authentication failed");
+        }
+      } else {
+        toast.success(isSignUp ? "Account created successfully!" : "Signed in successfully!");
+      }
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        const firstError = error.errors[0];
+        toast.error(firstError.message);
+      } else {
+        toast.error("An unexpected error occurred");
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-background via-background to-primary/5">
+      <div className="absolute top-4 right-4">
+        <ThemeToggle />
+      </div>
+      
+      <Card className="w-full max-w-md p-8 bg-gradient-card shadow-lg">
+        <div className="text-center mb-8">
+          <h1 className="text-3xl font-bold mb-2 bg-gradient-primary bg-clip-text text-transparent">
+            Brototype Complaints
+          </h1>
+          <p className="text-muted-foreground">
+            {isSignUp ? "Create your account" : "Sign in to your account"}
+          </p>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {isSignUp && (
+            <div className="space-y-2">
+              <Label htmlFor="name">Full Name</Label>
+              <Input
+                id="name"
+                type="text"
+                placeholder="John Doe"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                required
+                maxLength={100}
+              />
+            </div>
+          )}
+
+          <div className="space-y-2">
+            <Label htmlFor="email">Email</Label>
+            <Input
+              id="email"
+              type="email"
+              placeholder="you@example.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              maxLength={255}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="password">Password</Label>
+            <Input
+              id="password"
+              type="password"
+              placeholder="••••••••"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              minLength={6}
+            />
+          </div>
+
+          <Button
+            type="submit"
+            className="w-full bg-gradient-primary hover:opacity-90 transition-opacity"
+            disabled={loading}
+          >
+            {loading ? "Please wait..." : isSignUp ? "Sign Up" : "Sign In"}
+          </Button>
+        </form>
+
+        <div className="mt-6 text-center">
+          <button
+            type="button"
+            onClick={() => setIsSignUp(!isSignUp)}
+            className="text-sm text-primary hover:underline"
+          >
+            {isSignUp
+              ? "Already have an account? Sign in"
+              : "Don't have an account? Sign up"}
+          </button>
+        </div>
+
+        {isSignUp && (
+          <div className="mt-4 p-3 bg-muted/50 rounded-lg border border-border">
+            <div className="flex gap-2">
+              <AlertCircle className="h-4 w-4 text-muted-foreground shrink-0 mt-0.5" />
+              <p className="text-xs text-muted-foreground">
+                New users are registered as students by default. Contact an admin to change your role.
+              </p>
+            </div>
+          </div>
+        )}
+      </Card>
+    </div>
+  );
+};
+
+export default Auth;
