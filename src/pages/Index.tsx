@@ -40,23 +40,27 @@ const Index = () => {
             </p>
           </div>
 
-          <div className="flex flex-col sm:flex-row gap-4 justify-center mb-16 animate-fade-in">
+          <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8 animate-fade-in">
             <Button
               size="lg"
               onClick={() => navigate("/auth")}
               className="bg-gradient-primary hover:opacity-90 transition-opacity text-lg px-8 py-6"
             >
-              Get Started
+              Student Portal
             </Button>
             <Button
               size="lg"
-              variant="outline"
-              onClick={() => navigate("/auth")}
+              variant="destructive"
+              onClick={() => navigate("/admin/login")}
               className="text-lg px-8 py-6"
             >
-              Sign In
+              Admin Portal
             </Button>
           </div>
+
+          <p className="text-sm text-muted-foreground mb-16 animate-fade-in">
+            Students: Sign up or sign in • Admins: Use dedicated portal
+          </p>
 
           <div className="grid md:grid-cols-3 gap-8 mt-16">
             <div className="p-6 rounded-lg bg-gradient-card border shadow-md animate-fade-in hover:scale-105 transition-transform">
