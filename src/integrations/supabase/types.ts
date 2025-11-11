@@ -20,6 +20,7 @@ export type Database = {
           category: Database["public"]["Enums"]["complaint_category"]
           created_at: string | null
           description: string
+          hub_id: string | null
           id: string
           resolution_note: string | null
           status: Database["public"]["Enums"]["complaint_status"]
@@ -32,6 +33,7 @@ export type Database = {
           category: Database["public"]["Enums"]["complaint_category"]
           created_at?: string | null
           description: string
+          hub_id?: string | null
           id?: string
           resolution_note?: string | null
           status?: Database["public"]["Enums"]["complaint_status"]
@@ -44,6 +46,7 @@ export type Database = {
           category?: Database["public"]["Enums"]["complaint_category"]
           created_at?: string | null
           description?: string
+          hub_id?: string | null
           id?: string
           resolution_note?: string | null
           status?: Database["public"]["Enums"]["complaint_status"]
@@ -53,6 +56,13 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "complaints_hub_id_fkey"
+            columns: ["hub_id"]
+            isOneToOne: false
+            referencedRelation: "hubs"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "complaints_student_id_fkey"
             columns: ["student_id"]
             isOneToOne: false
@@ -60,6 +70,30 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      hubs: {
+        Row: {
+          created_at: string
+          id: string
+          location: string | null
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          location?: string | null
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          location?: string | null
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       profiles: {
         Row: {

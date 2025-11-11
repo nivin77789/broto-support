@@ -38,6 +38,7 @@ const StudentDashboard = () => {
   const { user, signOut } = useAuth();
   const [complaints, setComplaints] = useState<any[]>([]);
   const [filteredComplaints, setFilteredComplaints] = useState<any[]>([]);
+  const [hubs, setHubs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
   const [selectedComplaint, setSelectedComplaint] = useState<any>(null);
@@ -47,9 +48,11 @@ const StudentDashboard = () => {
     title: "",
     category: "",
     description: "",
+    hub_id: "",
   });
 
   useEffect(() => {
+    fetchHubs();
     fetchComplaints();
   }, [user]);
 
@@ -60,6 +63,20 @@ const StudentDashboard = () => {
       setFilteredComplaints(complaints.filter(c => c.status === filterStatus));
     }
   }, [filterStatus, complaints]);
+
+  const fetchHubs = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("hubs")
+        .select("*")
+        .order("name");
+
+      if (error) throw error;
+      setHubs(data || []);
+    } catch (error: any) {
+      toast.error("Failed to fetch hubs");
+    }
+  };
 
   const fetchComplaints = async () => {
     if (!user) return;
@@ -92,13 +109,14 @@ const StudentDashboard = () => {
         title: validatedData.title,
         category: validatedData.category,
         description: validatedData.description,
+        hub_id: formData.hub_id || null,
       });
 
       if (error) throw error;
 
       toast.success("Complaint submitted successfully!");
       setOpen(false);
-      setFormData({ title: "", category: "", description: "" });
+      setFormData({ title: "", category: "", description: "", hub_id: "" });
       fetchComplaints();
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -187,6 +205,25 @@ const StudentDashboard = () => {
                       {categories.map((cat) => (
                         <SelectItem key={cat} value={cat}>
                           {cat}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="hub">Hub</Label>
+                  <Select
+                    value={formData.hub_id}
+                    onValueChange={(value) => setFormData({ ...formData, hub_id: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select hub (optional)" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {hubs.map((hub) => (
+                        <SelectItem key={hub.id} value={hub.id}>
+                          {hub.name}
                         </SelectItem>
                       ))}
                     </SelectContent>

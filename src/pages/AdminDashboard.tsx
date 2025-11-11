@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { LogOut, Filter, TrendingUp } from "lucide-react";
+import { LogOut, Filter, TrendingUp, Building2, Plus } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { ComplaintCard } from "@/components/ComplaintCard";
@@ -11,9 +11,11 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -29,14 +31,20 @@ const AdminDashboard = () => {
   const [complaints, setComplaints] = useState<any[]>([]);
   const [filteredComplaints, setFilteredComplaints] = useState<any[]>([]);
   const [profiles, setProfiles] = useState<Record<string, string>>({});
+  const [hubs, setHubs] = useState<any[]>([]);
+  const [hubsMap, setHubsMap] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [selectedComplaint, setSelectedComplaint] = useState<any>(null);
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [filterCategory, setFilterCategory] = useState<string>("all");
+  const [filterHub, setFilterHub] = useState<string>("all");
   const [updateStatus, setUpdateStatus] = useState<"Pending" | "In Review" | "Resolved">("Pending");
   const [resolutionNote, setResolutionNote] = useState("");
+  const [hubDialogOpen, setHubDialogOpen] = useState(false);
+  const [newHub, setNewHub] = useState({ name: "", location: "" });
 
   useEffect(() => {
+    fetchHubs();
     fetchComplaints();
   }, []);
 
@@ -51,8 +59,33 @@ const AdminDashboard = () => {
       filtered = filtered.filter(c => c.category === filterCategory);
     }
     
+    if (filterHub !== "all") {
+      filtered = filtered.filter(c => c.hub_id === filterHub);
+    }
+    
     setFilteredComplaints(filtered);
-  }, [filterStatus, filterCategory, complaints]);
+  }, [filterStatus, filterCategory, filterHub, complaints]);
+
+  const fetchHubs = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("hubs")
+        .select("*")
+        .order("name");
+
+      if (error) throw error;
+
+      const hubsMapping: Record<string, string> = {};
+      data?.forEach(h => {
+        hubsMapping[h.id] = h.name;
+      });
+
+      setHubs(data || []);
+      setHubsMap(hubsMapping);
+    } catch (error: any) {
+      toast.error("Failed to fetch hubs");
+    }
+  };
 
   const fetchComplaints = async () => {
     try {
@@ -81,6 +114,30 @@ const AdminDashboard = () => {
       toast.error("Failed to fetch complaints");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleAddHub = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newHub.name.trim()) {
+      toast.error("Hub name is required");
+      return;
+    }
+
+    try {
+      const { error } = await supabase.from("hubs").insert({
+        name: newHub.name.trim(),
+        location: newHub.location.trim() || null,
+      });
+
+      if (error) throw error;
+
+      toast.success("Hub added successfully!");
+      setHubDialogOpen(false);
+      setNewHub({ name: "", location: "" });
+      fetchHubs();
+    } catch (error: any) {
+      toast.error(error.message || "Failed to add hub");
     }
   };
 
@@ -134,6 +191,63 @@ const AdminDashboard = () => {
             <p className="text-sm text-muted-foreground mt-1">Manage all complaints</p>
           </div>
           <div className="flex items-center gap-2">
+            <Dialog open={hubDialogOpen} onOpenChange={setHubDialogOpen}>
+              <DialogTrigger asChild>
+                <Button variant="outline" size="sm">
+                  <Building2 className="h-4 w-4 mr-2" />
+                  Manage Hubs
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Add New Hub</DialogTitle>
+                </DialogHeader>
+                <form onSubmit={handleAddHub} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="hubName">Hub Name *</Label>
+                    <Input
+                      id="hubName"
+                      value={newHub.name}
+                      onChange={(e) => setNewHub({ ...newHub, name: e.target.value })}
+                      placeholder="e.g., Kochi Hub"
+                      required
+                      maxLength={100}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="hubLocation">Location</Label>
+                    <Input
+                      id="hubLocation"
+                      value={newHub.location}
+                      onChange={(e) => setNewHub({ ...newHub, location: e.target.value })}
+                      placeholder="e.g., Infopark, Kochi"
+                      maxLength={200}
+                    />
+                  </div>
+                  <Button type="submit" className="w-full">
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add Hub
+                  </Button>
+                </form>
+                <div className="mt-4">
+                  <Label>Existing Hubs</Label>
+                  <div className="mt-2 space-y-2 max-h-40 overflow-y-auto">
+                    {hubs.length === 0 ? (
+                      <p className="text-sm text-muted-foreground">No hubs yet</p>
+                    ) : (
+                      hubs.map((hub) => (
+                        <div key={hub.id} className="flex items-center justify-between p-2 border rounded">
+                          <div>
+                            <p className="font-medium">{hub.name}</p>
+                            {hub.location && <p className="text-xs text-muted-foreground">{hub.location}</p>}
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              </DialogContent>
+            </Dialog>
             <ThemeToggle />
             <Button variant="ghost" size="icon" onClick={signOut}>
               <LogOut className="h-5 w-5" />
@@ -187,6 +301,20 @@ const AdminDashboard = () => {
               <SelectItem value="Other">Other</SelectItem>
             </SelectContent>
           </Select>
+
+          <Select value={filterHub} onValueChange={setFilterHub}>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Filter by hub" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Hubs</SelectItem>
+              {hubs.map((hub) => (
+                <SelectItem key={hub.id} value={hub.id}>
+                  {hub.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
         {loading ? (
@@ -230,6 +358,12 @@ const AdminDashboard = () => {
                   <Label>Student</Label>
                   <p className="mt-2 text-sm font-medium">
                     {profiles[selectedComplaint.student_id]}
+                  </p>
+                </div>
+                <div>
+                  <Label>Hub</Label>
+                  <p className="mt-2 text-sm font-medium">
+                    {selectedComplaint.hub_id ? hubsMap[selectedComplaint.hub_id] : "Not specified"}
                   </p>
                 </div>
                 <div>
