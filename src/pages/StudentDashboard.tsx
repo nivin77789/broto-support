@@ -26,11 +26,11 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { z } from "zod";
 
-const categories = ["Technical", "Hostel", "Mentor", "Financial", "Infrastructure", "Other"];
+const categories = ["Communication", "Hub", "Review", "Payments", "Others"];
 
 const complaintSchema = z.object({
   title: z.string().trim().min(3, "Title must be at least 3 characters").max(200, "Title too long"),
-  category: z.enum(["Technical", "Hostel", "Mentor", "Financial", "Infrastructure", "Other"]),
+  category: z.enum(["Communication", "Hub", "Review", "Payments", "Others"]),
   description: z.string().trim().min(10, "Description must be at least 10 characters").max(2000, "Description too long"),
 });
 
