@@ -29,15 +29,10 @@ import { Badge } from "@/components/ui/badge";
 const AdminDashboard = () => {
   const { signOut } = useAuth();
   const [complaints, setComplaints] = useState<any[]>([]);
-  const [filteredComplaints, setFilteredComplaints] = useState<any[]>([]);
   const [profiles, setProfiles] = useState<Record<string, string>>({});
   const [hubs, setHubs] = useState<any[]>([]);
-  const [hubsMap, setHubsMap] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [selectedComplaint, setSelectedComplaint] = useState<any>(null);
-  const [filterStatus, setFilterStatus] = useState<string>("all");
-  const [filterCategory, setFilterCategory] = useState<string>("all");
-  const [filterHub, setFilterHub] = useState<string>("all");
   const [updateStatus, setUpdateStatus] = useState<"Pending" | "In Review" | "Resolved">("Pending");
   const [resolutionNote, setResolutionNote] = useState("");
   const [hubDialogOpen, setHubDialogOpen] = useState(false);
@@ -48,24 +43,6 @@ const AdminDashboard = () => {
     fetchComplaints();
   }, []);
 
-  useEffect(() => {
-    let filtered = complaints;
-    
-    if (filterStatus !== "all") {
-      filtered = filtered.filter(c => c.status === filterStatus);
-    }
-    
-    if (filterCategory !== "all") {
-      filtered = filtered.filter(c => c.category === filterCategory);
-    }
-    
-    if (filterHub !== "all") {
-      filtered = filtered.filter(c => c.hub_id === filterHub);
-    }
-    
-    setFilteredComplaints(filtered);
-  }, [filterStatus, filterCategory, filterHub, complaints]);
-
   const fetchHubs = async () => {
     try {
       const { data, error } = await supabase
@@ -74,14 +51,7 @@ const AdminDashboard = () => {
         .order("name");
 
       if (error) throw error;
-
-      const hubsMapping: Record<string, string> = {};
-      data?.forEach(h => {
-        hubsMapping[h.id] = h.name;
-      });
-
       setHubs(data || []);
-      setHubsMap(hubsMapping);
     } catch (error: any) {
       toast.error("Failed to fetch hubs");
     }
@@ -109,12 +79,15 @@ const AdminDashboard = () => {
 
       setProfiles(profilesMap);
       setComplaints(data || []);
-      setFilteredComplaints(data || []);
     } catch (error: any) {
       toast.error("Failed to fetch complaints");
     } finally {
       setLoading(false);
     }
+  };
+
+  const getComplaintsByHub = (hubId: string | null) => {
+    return complaints.filter(c => c.hub_id === hubId);
   };
 
   const handleAddHub = async (e: React.FormEvent) => {
@@ -273,73 +246,54 @@ const AdminDashboard = () => {
           ))}
         </div>
 
-        <div className="flex items-center gap-2 mb-6 flex-wrap">
-          <Filter className="h-5 w-5 text-muted-foreground" />
-          <Select value={filterStatus} onValueChange={setFilterStatus}>
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Filter by status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Status</SelectItem>
-              <SelectItem value="Pending">Pending</SelectItem>
-              <SelectItem value="In Review">In Review</SelectItem>
-              <SelectItem value="Resolved">Resolved</SelectItem>
-            </SelectContent>
-          </Select>
-
-          <Select value={filterCategory} onValueChange={setFilterCategory}>
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Filter by category" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Categories</SelectItem>
-              <SelectItem value="Technical">Technical</SelectItem>
-              <SelectItem value="Hostel">Hostel</SelectItem>
-              <SelectItem value="Mentor">Mentor</SelectItem>
-              <SelectItem value="Financial">Financial</SelectItem>
-              <SelectItem value="Infrastructure">Infrastructure</SelectItem>
-              <SelectItem value="Other">Other</SelectItem>
-            </SelectContent>
-          </Select>
-
-          <Select value={filterHub} onValueChange={setFilterHub}>
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Filter by hub" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Hubs</SelectItem>
-              {hubs.map((hub) => (
-                <SelectItem key={hub.id} value={hub.id}>
-                  {hub.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
         {loading ? (
           <div className="flex justify-center items-center h-64">
             <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
           </div>
-        ) : filteredComplaints.length === 0 ? (
-          <div className="text-center py-16">
-            <p className="text-muted-foreground">No complaints found</p>
-          </div>
         ) : (
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {filteredComplaints.map((complaint) => (
-              <ComplaintCard
-                key={complaint.id}
-                complaint={complaint}
-                onClick={() => {
-                  setSelectedComplaint(complaint);
-                  setUpdateStatus(complaint.status);
-                  setResolutionNote(complaint.resolution_note || "");
-                }}
-                showStudent
-                studentName={profiles[complaint.student_id]}
-              />
-            ))}
+          <div className="space-y-6">
+            {hubs.map((hub) => {
+              const hubComplaints = getComplaintsByHub(hub.id);
+              return (
+                <Card key={hub.id} className="p-6 bg-gradient-card">
+                  <div className="flex items-center justify-between mb-4">
+                    <div>
+                      <h2 className="text-xl font-bold flex items-center gap-2">
+                        <Building2 className="h-5 w-5 text-primary" />
+                        {hub.name}
+                      </h2>
+                      {hub.location && (
+                        <p className="text-sm text-muted-foreground mt-1">{hub.location}</p>
+                      )}
+                    </div>
+                    <Badge variant="secondary" className="text-lg px-4 py-2">
+                      {hubComplaints.length} {hubComplaints.length === 1 ? 'Complaint' : 'Complaints'}
+                    </Badge>
+                  </div>
+                  {hubComplaints.length === 0 ? (
+                    <div className="text-center py-8 text-muted-foreground">
+                      No complaints for this hub
+                    </div>
+                  ) : (
+                    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                      {hubComplaints.map((complaint) => (
+                        <ComplaintCard
+                          key={complaint.id}
+                          complaint={complaint}
+                          onClick={() => {
+                            setSelectedComplaint(complaint);
+                            setUpdateStatus(complaint.status);
+                            setResolutionNote(complaint.resolution_note || "");
+                          }}
+                          showStudent
+                          studentName={profiles[complaint.student_id]}
+                        />
+                      ))}
+                    </div>
+                  )}
+                </Card>
+              );
+            })}
           </div>
         )}
 
@@ -363,7 +317,9 @@ const AdminDashboard = () => {
                 <div>
                   <Label>Hub</Label>
                   <p className="mt-2 text-sm font-medium">
-                    {selectedComplaint.hub_id ? hubsMap[selectedComplaint.hub_id] : "Not specified"}
+                    {selectedComplaint.hub_id 
+                      ? hubs.find(h => h.id === selectedComplaint.hub_id)?.name 
+                      : "Not specified"}
                   </p>
                 </div>
                 <div>
