@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Plus, LogOut, Filter } from "lucide-react";
+import { Plus, LogOut, Filter, Pencil, Trash2 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { ComplaintCard } from "@/components/ComplaintCard";
@@ -13,6 +13,16 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -41,8 +51,11 @@ const StudentDashboard = () => {
   const [hubs, setHubs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
   const [selectedComplaint, setSelectedComplaint] = useState<any>(null);
   const [filterStatus, setFilterStatus] = useState<string>("all");
+  const [editingComplaint, setEditingComplaint] = useState<any>(null);
 
   const [formData, setFormData] = useState({
     title: "",
@@ -129,6 +142,69 @@ const StudentDashboard = () => {
 
   const getStatusCount = (status: string) => {
     return complaints.filter(c => c.status === status).length;
+  };
+
+  const handleEdit = (complaint: any) => {
+    setEditingComplaint(complaint);
+    setFormData({
+      title: complaint.title,
+      category: complaint.category,
+      description: complaint.description,
+      hub_id: complaint.hub_id || "",
+    });
+    setEditOpen(true);
+  };
+
+  const handleUpdate = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    try {
+      const validatedData = complaintSchema.parse(formData);
+
+      const { error } = await supabase
+        .from("complaints")
+        .update({
+          title: validatedData.title,
+          category: validatedData.category,
+          description: validatedData.description,
+          hub_id: formData.hub_id || null,
+        })
+        .eq("id", editingComplaint.id);
+
+      if (error) throw error;
+
+      toast.success("Complaint updated successfully!");
+      setEditOpen(false);
+      setEditingComplaint(null);
+      setFormData({ title: "", category: "", description: "", hub_id: "" });
+      fetchComplaints();
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        toast.error(error.errors[0].message);
+      } else {
+        toast.error("Failed to update complaint");
+      }
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!selectedComplaint) return;
+
+    try {
+      const { error } = await supabase
+        .from("complaints")
+        .delete()
+        .eq("id", selectedComplaint.id);
+
+      if (error) throw error;
+
+      toast.success("Complaint deleted successfully!");
+      setDeleteOpen(false);
+      setSelectedComplaint(null);
+      fetchComplaints();
+    } catch (error) {
+      toast.error("Failed to delete complaint");
+    }
   };
 
   return (
@@ -305,10 +381,133 @@ const StudentDashboard = () => {
                     </p>
                   </div>
                 )}
+                <div className="flex gap-2 pt-4">
+                  <Button
+                    variant="outline"
+                    className="flex-1"
+                    onClick={() => {
+                      handleEdit(selectedComplaint);
+                      setSelectedComplaint(null);
+                    }}
+                  >
+                    <Pencil className="h-4 w-4 mr-2" />
+                    Edit
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="flex-1 text-destructive hover:text-destructive"
+                    onClick={() => {
+                      setDeleteOpen(true);
+                    }}
+                  >
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Delete
+                  </Button>
+                </div>
               </div>
             )}
           </DialogContent>
         </Dialog>
+
+        <Dialog open={editOpen} onOpenChange={setEditOpen}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>Edit Complaint</DialogTitle>
+            </DialogHeader>
+            <form onSubmit={handleUpdate} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="edit-title">Title</Label>
+                <Input
+                  id="edit-title"
+                  value={formData.title}
+                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                  placeholder="Brief description of the issue"
+                  required
+                  maxLength={200}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="edit-category">Category</Label>
+                <Select
+                  value={formData.category}
+                  onValueChange={(value) => setFormData({ ...formData, category: value })}
+                  required
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {categories.map((cat) => (
+                      <SelectItem key={cat} value={cat}>
+                        {cat}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="edit-hub">Hub</Label>
+                <Select
+                  value={formData.hub_id}
+                  onValueChange={(value) => setFormData({ ...formData, hub_id: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select hub (optional)" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {hubs.map((hub) => (
+                      <SelectItem key={hub.id} value={hub.id}>
+                        {hub.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="edit-description">Description</Label>
+                <Textarea
+                  id="edit-description"
+                  value={formData.description}
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  placeholder="Detailed description of your complaint"
+                  rows={6}
+                  required
+                  maxLength={2000}
+                />
+                <p className="text-xs text-muted-foreground">
+                  {formData.description.length}/2000 characters
+                </p>
+              </div>
+
+              <Button type="submit" className="w-full bg-gradient-primary">
+                Update Complaint
+              </Button>
+            </form>
+          </DialogContent>
+        </Dialog>
+
+        <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This action cannot be undone. This will permanently delete your complaint.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={handleDelete}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                Delete
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </main>
     </div>
   );
