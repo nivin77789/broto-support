@@ -90,6 +90,12 @@ const AdminDashboard = () => {
     return complaints.filter(c => c.hub_id === hubId);
   };
 
+  const getComplaintsByCategory = (hubComplaints: any[], category: string) => {
+    return hubComplaints.filter(c => c.category === category);
+  };
+
+  const categories = ["Communication", "Hub", "Review", "Payments", "Others"];
+
   const handleAddHub = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newHub.name.trim()) {
@@ -256,7 +262,7 @@ const AdminDashboard = () => {
               const hubComplaints = getComplaintsByHub(hub.id);
               return (
                 <Card key={hub.id} className="p-6 bg-gradient-card">
-                  <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center justify-between mb-6">
                     <div>
                       <h2 className="text-xl font-bold flex items-center gap-2">
                         <Building2 className="h-5 w-5 text-primary" />
@@ -275,20 +281,37 @@ const AdminDashboard = () => {
                       No complaints for this hub
                     </div>
                   ) : (
-                    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                      {hubComplaints.map((complaint) => (
-                        <ComplaintCard
-                          key={complaint.id}
-                          complaint={complaint}
-                          onClick={() => {
-                            setSelectedComplaint(complaint);
-                            setUpdateStatus(complaint.status);
-                            setResolutionNote(complaint.resolution_note || "");
-                          }}
-                          showStudent
-                          studentName={profiles[complaint.student_id]}
-                        />
-                      ))}
+                    <div className="space-y-6">
+                      {categories.map((category) => {
+                        const categoryComplaints = getComplaintsByCategory(hubComplaints, category);
+                        if (categoryComplaints.length === 0) return null;
+                        
+                        return (
+                          <div key={category} className="space-y-3">
+                            <div className="flex items-center gap-2 border-b pb-2">
+                              <h3 className="text-lg font-semibold">{category}</h3>
+                              <Badge variant="outline">
+                                {categoryComplaints.length}
+                              </Badge>
+                            </div>
+                            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                              {categoryComplaints.map((complaint) => (
+                                <ComplaintCard
+                                  key={complaint.id}
+                                  complaint={complaint}
+                                  onClick={() => {
+                                    setSelectedComplaint(complaint);
+                                    setUpdateStatus(complaint.status);
+                                    setResolutionNote(complaint.resolution_note || "");
+                                  }}
+                                  showStudent
+                                  studentName={profiles[complaint.student_id]}
+                                />
+                              ))}
+                            </div>
+                          </div>
+                        );
+                      })}
                     </div>
                   )}
                 </Card>
