@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { LogOut, Filter, TrendingUp, Building2, Plus } from "lucide-react";
+import { LogOut, Filter, TrendingUp, Building2, Plus, ChevronDown, ChevronRight } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { ComplaintCard } from "@/components/ComplaintCard";
@@ -37,6 +37,8 @@ const AdminDashboard = () => {
   const [resolutionNote, setResolutionNote] = useState("");
   const [hubDialogOpen, setHubDialogOpen] = useState(false);
   const [newHub, setNewHub] = useState({ name: "", location: "" });
+  const [expandedHub, setExpandedHub] = useState<string | null>(null);
+  const [categoryFilter, setCategoryFilter] = useState<string>("all");
 
   useEffect(() => {
     fetchHubs();
@@ -152,6 +154,20 @@ const AdminDashboard = () => {
     return complaints.filter(c => c.category === category).length;
   };
 
+  const getHubStats = (hubId: string) => {
+    const hubComplaints = getComplaintsByHub(hubId);
+    return {
+      total: hubComplaints.length,
+      pending: hubComplaints.filter(c => c.status === "Pending").length,
+      resolved: hubComplaints.filter(c => c.status === "Resolved").length,
+    };
+  };
+
+  const getFilteredComplaints = (hubComplaints: any[]) => {
+    if (categoryFilter === "all") return hubComplaints;
+    return hubComplaints.filter(c => c.category === categoryFilter);
+  };
+
   const stats = [
     { label: "Total", value: complaints.length, color: "bg-primary" },
     { label: "Pending", value: getStatusCount("Pending"), color: "bg-warning" },
@@ -252,66 +268,117 @@ const AdminDashboard = () => {
           ))}
         </div>
 
+        <div className="mb-6 flex items-center gap-4">
+          <Label className="flex items-center gap-2">
+            <Filter className="h-4 w-4" />
+            Filter by Category:
+          </Label>
+          <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+            <SelectTrigger className="w-48">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Categories</SelectItem>
+              {categories.map((category) => (
+                <SelectItem key={category} value={category}>
+                  {category}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
         {loading ? (
           <div className="flex justify-center items-center h-64">
             <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
           </div>
         ) : (
-          <div className="space-y-6">
+          <div className="space-y-4">
             {hubs.map((hub) => {
+              const stats = getHubStats(hub.id);
+              const isExpanded = expandedHub === hub.id;
               const hubComplaints = getComplaintsByHub(hub.id);
+              const filteredComplaints = getFilteredComplaints(hubComplaints);
+              
               return (
-                <Card key={hub.id} className="p-6 bg-gradient-card">
-                  <div className="flex items-center justify-between mb-6">
-                    <div>
-                      <h2 className="text-xl font-bold flex items-center gap-2">
-                        <Building2 className="h-5 w-5 text-primary" />
-                        {hub.name}
-                      </h2>
-                      {hub.location && (
-                        <p className="text-sm text-muted-foreground mt-1">{hub.location}</p>
+                <Card 
+                  key={hub.id} 
+                  className="p-6 bg-gradient-card cursor-pointer hover:shadow-lg transition-shadow"
+                  onClick={() => setExpandedHub(isExpanded ? null : hub.id)}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      {isExpanded ? (
+                        <ChevronDown className="h-5 w-5 text-primary" />
+                      ) : (
+                        <ChevronRight className="h-5 w-5 text-muted-foreground" />
                       )}
+                      <div>
+                        <h2 className="text-xl font-bold flex items-center gap-2">
+                          <Building2 className="h-5 w-5 text-primary" />
+                          {hub.name}
+                        </h2>
+                        {hub.location && (
+                          <p className="text-sm text-muted-foreground mt-1">{hub.location}</p>
+                        )}
+                      </div>
                     </div>
-                    <Badge variant="secondary" className="text-lg px-4 py-2">
-                      {hubComplaints.length} {hubComplaints.length === 1 ? 'Complaint' : 'Complaints'}
-                    </Badge>
+                    <div className="flex gap-3">
+                      <div className="text-center">
+                        <p className="text-2xl font-bold">{stats.total}</p>
+                        <p className="text-xs text-muted-foreground">Total</p>
+                      </div>
+                      <div className="text-center">
+                        <p className="text-2xl font-bold text-warning">{stats.pending}</p>
+                        <p className="text-xs text-muted-foreground">Pending</p>
+                      </div>
+                      <div className="text-center">
+                        <p className="text-2xl font-bold text-success">{stats.resolved}</p>
+                        <p className="text-xs text-muted-foreground">Resolved</p>
+                      </div>
+                    </div>
                   </div>
-                  {hubComplaints.length === 0 ? (
-                    <div className="text-center py-8 text-muted-foreground">
-                      No complaints for this hub
-                    </div>
-                  ) : (
-                    <div className="space-y-6">
-                      {categories.map((category) => {
-                        const categoryComplaints = getComplaintsByCategory(hubComplaints, category);
-                        if (categoryComplaints.length === 0) return null;
-                        
-                        return (
-                          <div key={category} className="space-y-3">
-                            <div className="flex items-center gap-2 border-b pb-2">
-                              <h3 className="text-lg font-semibold">{category}</h3>
-                              <Badge variant="outline">
-                                {categoryComplaints.length}
-                              </Badge>
-                            </div>
-                            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                              {categoryComplaints.map((complaint) => (
-                                <ComplaintCard
-                                  key={complaint.id}
-                                  complaint={complaint}
-                                  onClick={() => {
-                                    setSelectedComplaint(complaint);
-                                    setUpdateStatus(complaint.status);
-                                    setResolutionNote(complaint.resolution_note || "");
-                                  }}
-                                  showStudent
-                                  studentName={profiles[complaint.student_id]}
-                                />
-                              ))}
-                            </div>
-                          </div>
-                        );
-                      })}
+
+                  {isExpanded && (
+                    <div className="mt-6 space-y-6" onClick={(e) => e.stopPropagation()}>
+                      {filteredComplaints.length === 0 ? (
+                        <div className="text-center py-8 text-muted-foreground">
+                          No complaints found
+                        </div>
+                      ) : (
+                        <div className="space-y-6">
+                          {categories.map((category) => {
+                            const categoryComplaints = getComplaintsByCategory(filteredComplaints, category);
+                            if (categoryComplaints.length === 0) return null;
+                            
+                            return (
+                              <div key={category} className="space-y-3">
+                                <div className="flex items-center gap-2 border-b pb-2">
+                                  <h3 className="text-lg font-semibold">{category}</h3>
+                                  <Badge variant="outline">
+                                    {categoryComplaints.length}
+                                  </Badge>
+                                </div>
+                                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                                  {categoryComplaints.map((complaint) => (
+                                    <ComplaintCard
+                                      key={complaint.id}
+                                      complaint={complaint}
+                                      onClick={() => {
+                                        setSelectedComplaint(complaint);
+                                        setUpdateStatus(complaint.status);
+                                        setResolutionNote(complaint.resolution_note || "");
+                                      }}
+                                      showStudent
+                                      studentName={profiles[complaint.student_id]}
+                                    />
+                                  ))}
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
                     </div>
                   )}
                 </Card>
