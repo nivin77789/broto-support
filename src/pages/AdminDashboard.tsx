@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { LogOut, Filter, TrendingUp, Building2, Plus, ChevronDown, ChevronRight } from "lucide-react";
+import { LogOut, Filter, TrendingUp, Building2, Plus, ArrowRight } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { ComplaintCard } from "@/components/ComplaintCard";
@@ -28,6 +29,7 @@ import { Badge } from "@/components/ui/badge";
 
 const AdminDashboard = () => {
   const { signOut } = useAuth();
+  const navigate = useNavigate();
   const [complaints, setComplaints] = useState<any[]>([]);
   const [profiles, setProfiles] = useState<Record<string, string>>({});
   const [hubs, setHubs] = useState<any[]>([]);
@@ -37,19 +39,11 @@ const AdminDashboard = () => {
   const [resolutionNote, setResolutionNote] = useState("");
   const [hubDialogOpen, setHubDialogOpen] = useState(false);
   const [newHub, setNewHub] = useState({ name: "", location: "" });
-  const [selectedHub, setSelectedHub] = useState<string | null>(null);
-  const [categoryFilter, setCategoryFilter] = useState<string>("all");
 
   useEffect(() => {
     fetchHubs();
     fetchComplaints();
   }, []);
-
-  useEffect(() => {
-    if (hubs.length > 0 && !selectedHub) {
-      setSelectedHub(hubs[0].id);
-    }
-  }, [hubs, selectedHub]);
 
   const fetchHubs = async () => {
     try {
@@ -169,9 +163,11 @@ const AdminDashboard = () => {
     };
   };
 
-  const getFilteredComplaints = (hubComplaints: any[]) => {
-    if (categoryFilter === "all") return hubComplaints;
-    return hubComplaints.filter(c => c.category === categoryFilter);
+  const getNewComplaints = () => {
+    return complaints
+      .filter(c => c.status === "Pending")
+      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+      .slice(0, 10);
   };
 
   const stats = [
@@ -285,27 +281,24 @@ const AdminDashboard = () => {
               <h2 className="text-xl font-bold mb-4">Hubs</h2>
               {hubs.map((hub) => {
                 const stats = getHubStats(hub.id);
-                const isSelected = selectedHub === hub.id;
                 
                 return (
                   <Card 
                     key={hub.id} 
-                    className={`p-6 bg-gradient-card cursor-pointer hover:shadow-lg transition-all ${
-                      isSelected ? 'ring-2 ring-primary shadow-lg' : ''
-                    }`}
-                    onClick={() => {
-                      setSelectedHub(hub.id);
-                      setCategoryFilter("all");
-                    }}
+                    className="p-6 bg-gradient-card cursor-pointer hover:shadow-lg transition-all group"
+                    onClick={() => navigate(`/admin/hub/${hub.id}`)}
                   >
-                    <div>
-                      <h3 className="text-lg font-bold flex items-center gap-2">
-                        <Building2 className="h-5 w-5 text-primary" />
-                        {hub.name}
-                      </h3>
-                      {hub.location && (
-                        <p className="text-sm text-muted-foreground mt-1">{hub.location}</p>
-                      )}
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <h3 className="text-lg font-bold flex items-center gap-2">
+                          <Building2 className="h-5 w-5 text-primary" />
+                          {hub.name}
+                        </h3>
+                        {hub.location && (
+                          <p className="text-sm text-muted-foreground mt-1">{hub.location}</p>
+                        )}
+                      </div>
+                      <ArrowRight className="h-5 w-5 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all" />
                     </div>
                     <div className="flex gap-4 mt-4">
                       <div className="text-center">
@@ -326,93 +319,62 @@ const AdminDashboard = () => {
               })}
             </div>
 
-            {/* Right Side - Complaints and Filters */}
+            {/* Right Side - New Complaints */}
             <div className="col-span-12 lg:col-span-8">
-              {selectedHub ? (
-                <>
-                  <div className="flex items-center justify-between mb-6">
-                    <h2 className="text-xl font-bold">
-                      Complaints - {hubs.find(h => h.id === selectedHub)?.name}
-                    </h2>
-                    <div className="flex items-center gap-2">
-                      <Label className="flex items-center gap-2 text-sm">
-                        <Filter className="h-4 w-4" />
-                        Category:
-                      </Label>
-                      <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-                        <SelectTrigger className="w-48 bg-background">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent className="bg-background z-50">
-                          <SelectItem value="all">All Categories</SelectItem>
-                          {categories.map((category) => (
-                            <SelectItem key={category} value={category}>
-                              {category}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-xl font-bold">Recent Pending Complaints</h2>
+                <Badge variant="secondary" className="text-lg px-4 py-2">
+                  {getNewComplaints().length} New
+                </Badge>
+              </div>
 
-                  {(() => {
-                    const hubComplaints = getComplaintsByHub(selectedHub);
-                    const filteredComplaints = getFilteredComplaints(hubComplaints);
-                    
-                    if (filteredComplaints.length === 0) {
-                      return (
-                        <Card className="p-12 bg-gradient-card">
-                          <div className="text-center text-muted-foreground">
-                            <Filter className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                            <p>No complaints found</p>
-                          </div>
-                        </Card>
-                      );
-                    }
-
-                    return (
-                      <div className="space-y-6">
-                        {categories.map((category) => {
-                          const categoryComplaints = getComplaintsByCategory(filteredComplaints, category);
-                          if (categoryComplaints.length === 0) return null;
-                          
-                          return (
-                            <div key={category} className="space-y-3">
-                              <div className="flex items-center gap-2 border-b pb-2">
-                                <h3 className="text-lg font-semibold">{category}</h3>
-                                <Badge variant="outline">
-                                  {categoryComplaints.length}
-                                </Badge>
-                              </div>
-                              <div className="grid gap-4 md:grid-cols-2">
-                                {categoryComplaints.map((complaint) => (
-                                  <ComplaintCard
-                                    key={complaint.id}
-                                    complaint={complaint}
-                                    onClick={() => {
-                                      setSelectedComplaint(complaint);
-                                      setUpdateStatus(complaint.status);
-                                      setResolutionNote(complaint.resolution_note || "");
-                                    }}
-                                    showStudent
-                                    studentName={profiles[complaint.student_id]}
-                                  />
-                                ))}
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    );
-                  })()}
-                </>
-              ) : (
+              {getNewComplaints().length === 0 ? (
                 <Card className="p-12 bg-gradient-card">
                   <div className="text-center text-muted-foreground">
-                    <Building2 className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                    <p>Select a hub to view complaints</p>
+                    <TrendingUp className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                    <p>No pending complaints</p>
                   </div>
                 </Card>
+              ) : (
+                <div className="space-y-4">
+                  {getNewComplaints().map((complaint) => (
+                    <Card 
+                      key={complaint.id}
+                      className="p-4 bg-gradient-card hover:shadow-md transition-shadow"
+                    >
+                      <div className="flex items-start gap-4">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-2">
+                            <h3 className="font-semibold">{complaint.title}</h3>
+                            <Badge variant="outline">{complaint.category}</Badge>
+                            <Badge variant="secondary">Pending</Badge>
+                          </div>
+                          <p className="text-sm text-muted-foreground line-clamp-2 mb-2">
+                            {complaint.description}
+                          </p>
+                          <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                            <span>Student: {profiles[complaint.student_id]}</span>
+                            <span>•</span>
+                            <span>Hub: {hubs.find(h => h.id === complaint.hub_id)?.name || "N/A"}</span>
+                            <span>•</span>
+                            <span>{new Date(complaint.created_at).toLocaleDateString()}</span>
+                          </div>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            setSelectedComplaint(complaint);
+                            setUpdateStatus(complaint.status);
+                            setResolutionNote(complaint.resolution_note || "");
+                          }}
+                        >
+                          View Details
+                        </Button>
+                      </div>
+                    </Card>
+                  ))}
+                </div>
               )}
             </div>
           </div>
