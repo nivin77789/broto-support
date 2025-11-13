@@ -37,13 +37,19 @@ const AdminDashboard = () => {
   const [resolutionNote, setResolutionNote] = useState("");
   const [hubDialogOpen, setHubDialogOpen] = useState(false);
   const [newHub, setNewHub] = useState({ name: "", location: "" });
-  const [expandedHub, setExpandedHub] = useState<string | null>(null);
+  const [selectedHub, setSelectedHub] = useState<string | null>(null);
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
 
   useEffect(() => {
     fetchHubs();
     fetchComplaints();
   }, []);
+
+  useEffect(() => {
+    if (hubs.length > 0 && !selectedHub) {
+      setSelectedHub(hubs[0].id);
+    }
+  }, [hubs, selectedHub]);
 
   const fetchHubs = async () => {
     try {
@@ -268,62 +274,40 @@ const AdminDashboard = () => {
           ))}
         </div>
 
-        <div className="mb-6 flex items-center gap-4">
-          <Label className="flex items-center gap-2">
-            <Filter className="h-4 w-4" />
-            Filter by Category:
-          </Label>
-          <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-            <SelectTrigger className="w-48">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Categories</SelectItem>
-              {categories.map((category) => (
-                <SelectItem key={category} value={category}>
-                  {category}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
         {loading ? (
           <div className="flex justify-center items-center h-64">
             <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
           </div>
         ) : (
-          <div className="space-y-4">
-            {hubs.map((hub) => {
-              const stats = getHubStats(hub.id);
-              const isExpanded = expandedHub === hub.id;
-              const hubComplaints = getComplaintsByHub(hub.id);
-              const filteredComplaints = getFilteredComplaints(hubComplaints);
-              
-              return (
-                <Card 
-                  key={hub.id} 
-                  className="p-6 bg-gradient-card cursor-pointer hover:shadow-lg transition-shadow"
-                  onClick={() => setExpandedHub(isExpanded ? null : hub.id)}
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      {isExpanded ? (
-                        <ChevronDown className="h-5 w-5 text-primary" />
-                      ) : (
-                        <ChevronRight className="h-5 w-5 text-muted-foreground" />
+          <div className="grid grid-cols-12 gap-6">
+            {/* Left Side - Hub Cards */}
+            <div className="col-span-12 lg:col-span-4 space-y-4">
+              <h2 className="text-xl font-bold mb-4">Hubs</h2>
+              {hubs.map((hub) => {
+                const stats = getHubStats(hub.id);
+                const isSelected = selectedHub === hub.id;
+                
+                return (
+                  <Card 
+                    key={hub.id} 
+                    className={`p-6 bg-gradient-card cursor-pointer hover:shadow-lg transition-all ${
+                      isSelected ? 'ring-2 ring-primary shadow-lg' : ''
+                    }`}
+                    onClick={() => {
+                      setSelectedHub(hub.id);
+                      setCategoryFilter("all");
+                    }}
+                  >
+                    <div>
+                      <h3 className="text-lg font-bold flex items-center gap-2">
+                        <Building2 className="h-5 w-5 text-primary" />
+                        {hub.name}
+                      </h3>
+                      {hub.location && (
+                        <p className="text-sm text-muted-foreground mt-1">{hub.location}</p>
                       )}
-                      <div>
-                        <h2 className="text-xl font-bold flex items-center gap-2">
-                          <Building2 className="h-5 w-5 text-primary" />
-                          {hub.name}
-                        </h2>
-                        {hub.location && (
-                          <p className="text-sm text-muted-foreground mt-1">{hub.location}</p>
-                        )}
-                      </div>
                     </div>
-                    <div className="flex gap-3">
+                    <div className="flex gap-4 mt-4">
                       <div className="text-center">
                         <p className="text-2xl font-bold">{stats.total}</p>
                         <p className="text-xs text-muted-foreground">Total</p>
@@ -337,53 +321,100 @@ const AdminDashboard = () => {
                         <p className="text-xs text-muted-foreground">Resolved</p>
                       </div>
                     </div>
+                  </Card>
+                );
+              })}
+            </div>
+
+            {/* Right Side - Complaints and Filters */}
+            <div className="col-span-12 lg:col-span-8">
+              {selectedHub ? (
+                <>
+                  <div className="flex items-center justify-between mb-6">
+                    <h2 className="text-xl font-bold">
+                      Complaints - {hubs.find(h => h.id === selectedHub)?.name}
+                    </h2>
+                    <div className="flex items-center gap-2">
+                      <Label className="flex items-center gap-2 text-sm">
+                        <Filter className="h-4 w-4" />
+                        Category:
+                      </Label>
+                      <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+                        <SelectTrigger className="w-48 bg-background">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent className="bg-background z-50">
+                          <SelectItem value="all">All Categories</SelectItem>
+                          {categories.map((category) => (
+                            <SelectItem key={category} value={category}>
+                              {category}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
                   </div>
 
-                  {isExpanded && (
-                    <div className="mt-6 space-y-6" onClick={(e) => e.stopPropagation()}>
-                      {filteredComplaints.length === 0 ? (
-                        <div className="text-center py-8 text-muted-foreground">
-                          No complaints found
-                        </div>
-                      ) : (
-                        <div className="space-y-6">
-                          {categories.map((category) => {
-                            const categoryComplaints = getComplaintsByCategory(filteredComplaints, category);
-                            if (categoryComplaints.length === 0) return null;
-                            
-                            return (
-                              <div key={category} className="space-y-3">
-                                <div className="flex items-center gap-2 border-b pb-2">
-                                  <h3 className="text-lg font-semibold">{category}</h3>
-                                  <Badge variant="outline">
-                                    {categoryComplaints.length}
-                                  </Badge>
-                                </div>
-                                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                                  {categoryComplaints.map((complaint) => (
-                                    <ComplaintCard
-                                      key={complaint.id}
-                                      complaint={complaint}
-                                      onClick={() => {
-                                        setSelectedComplaint(complaint);
-                                        setUpdateStatus(complaint.status);
-                                        setResolutionNote(complaint.resolution_note || "");
-                                      }}
-                                      showStudent
-                                      studentName={profiles[complaint.student_id]}
-                                    />
-                                  ))}
-                                </div>
+                  {(() => {
+                    const hubComplaints = getComplaintsByHub(selectedHub);
+                    const filteredComplaints = getFilteredComplaints(hubComplaints);
+                    
+                    if (filteredComplaints.length === 0) {
+                      return (
+                        <Card className="p-12 bg-gradient-card">
+                          <div className="text-center text-muted-foreground">
+                            <Filter className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                            <p>No complaints found</p>
+                          </div>
+                        </Card>
+                      );
+                    }
+
+                    return (
+                      <div className="space-y-6">
+                        {categories.map((category) => {
+                          const categoryComplaints = getComplaintsByCategory(filteredComplaints, category);
+                          if (categoryComplaints.length === 0) return null;
+                          
+                          return (
+                            <div key={category} className="space-y-3">
+                              <div className="flex items-center gap-2 border-b pb-2">
+                                <h3 className="text-lg font-semibold">{category}</h3>
+                                <Badge variant="outline">
+                                  {categoryComplaints.length}
+                                </Badge>
                               </div>
-                            );
-                          })}
-                        </div>
-                      )}
-                    </div>
-                  )}
+                              <div className="grid gap-4 md:grid-cols-2">
+                                {categoryComplaints.map((complaint) => (
+                                  <ComplaintCard
+                                    key={complaint.id}
+                                    complaint={complaint}
+                                    onClick={() => {
+                                      setSelectedComplaint(complaint);
+                                      setUpdateStatus(complaint.status);
+                                      setResolutionNote(complaint.resolution_note || "");
+                                    }}
+                                    showStudent
+                                    studentName={profiles[complaint.student_id]}
+                                  />
+                                ))}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    );
+                  })()}
+                </>
+              ) : (
+                <Card className="p-12 bg-gradient-card">
+                  <div className="text-center text-muted-foreground">
+                    <Building2 className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                    <p>Select a hub to view complaints</p>
+                  </div>
                 </Card>
-              );
-            })}
+              )}
+            </div>
           </div>
         )}
 
