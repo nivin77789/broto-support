@@ -1,7 +1,7 @@
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
-import { FileText, Clock } from "lucide-react";
+import { FileText, Clock, Image as ImageIcon } from "lucide-react";
 
 interface ComplaintCardProps {
   complaint: {
@@ -12,6 +12,7 @@ interface ComplaintCardProps {
     created_at: string;
     description: string;
     resolution_note?: string;
+    attachment_url?: string;
   };
   onClick?: () => void;
   showStudent?: boolean;
@@ -67,6 +68,16 @@ export const ComplaintCard = ({ complaint, onClick, showStudent, studentName }: 
       <p className="text-sm text-muted-foreground mb-4 line-clamp-2">
         {complaint.description}
       </p>
+
+      {complaint.attachment_url && (
+        <div className="mb-4">
+          <img 
+            src={complaint.attachment_url} 
+            alt="Complaint attachment" 
+            className="w-full h-40 object-cover rounded-lg border"
+          />
+        </div>
+      )}
 
       <div className="flex items-center justify-between">
         <Badge className={getCategoryColor(complaint.category)} variant="outline">
