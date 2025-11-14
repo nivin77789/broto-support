@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Plus, LogOut, Filter, Pencil, Trash2 } from "lucide-react";
+import { Plus, LogOut, Filter, Pencil, Trash2, Upload, X } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { ComplaintCard } from "@/components/ComplaintCard";
@@ -64,6 +64,9 @@ const StudentDashboard = () => {
     hub_id: "",
   });
 
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+
   useEffect(() => {
     fetchHubs();
     fetchComplaints();
@@ -111,17 +114,67 @@ const StudentDashboard = () => {
     }
   };
 
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error("Image size must be less than 5MB");
+        return;
+      }
+      setImageFile(file);
+      setImagePreview(URL.createObjectURL(file));
+    }
+  };
+
+  const removeImage = () => {
+    setImageFile(null);
+    setImagePreview(null);
+  };
+
+  const uploadImage = async (file: File): Promise<string | null> => {
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${user?.id}-${Date.now()}.${fileExt}`;
+      const filePath = `${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('complaint-attachments')
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('complaint-attachments')
+        .getPublicUrl(filePath);
+
+      return publicUrl;
+    } catch (error) {
+      console.error('Error uploading image:', error);
+      toast.error("Failed to upload image");
+      return null;
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     try {
       const validatedData = complaintSchema.parse(formData);
 
+      let attachmentUrl = null;
+      if (imageFile) {
+        attachmentUrl = await uploadImage(imageFile);
+        if (!attachmentUrl) {
+          return;
+        }
+      }
+
       const { error } = await supabase.from("complaints").insert({
         student_id: user?.id,
         title: validatedData.title,
         category: validatedData.category,
         description: validatedData.description,
+        attachment_url: attachmentUrl,
         hub_id: formData.hub_id || null,
       });
 
@@ -130,6 +183,8 @@ const StudentDashboard = () => {
       toast.success("Complaint submitted successfully!");
       setOpen(false);
       setFormData({ title: "", category: "", description: "", hub_id: "" });
+      setImageFile(null);
+      setImagePreview(null);
       fetchComplaints();
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -161,12 +216,21 @@ const StudentDashboard = () => {
     try {
       const validatedData = complaintSchema.parse(formData);
 
+      let attachmentUrl = editingComplaint?.attachment_url;
+      if (imageFile) {
+        attachmentUrl = await uploadImage(imageFile);
+        if (!attachmentUrl && imageFile) {
+          return;
+        }
+      }
+
       const { error } = await supabase
         .from("complaints")
         .update({
           title: validatedData.title,
           category: validatedData.category,
           description: validatedData.description,
+          attachment_url: attachmentUrl,
           hub_id: formData.hub_id || null,
         })
         .eq("id", editingComplaint.id);
@@ -177,6 +241,8 @@ const StudentDashboard = () => {
       setEditOpen(false);
       setEditingComplaint(null);
       setFormData({ title: "", category: "", description: "", hub_id: "" });
+      setImageFile(null);
+      setImagePreview(null);
       fetchComplaints();
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -320,6 +386,43 @@ const StudentDashboard = () => {
                   <p className="text-xs text-muted-foreground">
                     {formData.description.length}/2000 characters
                   </p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="image">Attachment (Optional)</Label>
+                  <div className="flex flex-col gap-3">
+                    {imagePreview ? (
+                      <div className="relative">
+                        <img 
+                          src={imagePreview} 
+                          alt="Preview" 
+                          className="w-full h-48 object-cover rounded-lg border"
+                        />
+                        <Button
+                          type="button"
+                          variant="destructive"
+                          size="icon"
+                          className="absolute top-2 right-2"
+                          onClick={removeImage}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ) : (
+                      <label className="flex flex-col items-center justify-center h-32 border-2 border-dashed rounded-lg cursor-pointer hover:bg-accent/5 transition-colors">
+                        <Upload className="h-8 w-8 text-muted-foreground mb-2" />
+                        <span className="text-sm text-muted-foreground">Click to upload image</span>
+                        <span className="text-xs text-muted-foreground mt-1">Max 5MB</span>
+                        <input
+                          id="image"
+                          type="file"
+                          accept="image/*"
+                          onChange={handleImageChange}
+                          className="hidden"
+                        />
+                      </label>
+                    )}
+                  </div>
                 </div>
 
                 <Button type="submit" className="w-full bg-gradient-primary">
@@ -480,6 +583,43 @@ const StudentDashboard = () => {
                 <p className="text-xs text-muted-foreground">
                   {formData.description.length}/2000 characters
                 </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="edit-image">Attachment (Optional)</Label>
+                <div className="flex flex-col gap-3">
+                  {imagePreview ? (
+                    <div className="relative">
+                      <img 
+                        src={imagePreview} 
+                        alt="Preview" 
+                        className="w-full h-48 object-cover rounded-lg border"
+                      />
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="icon"
+                        className="absolute top-2 right-2"
+                        onClick={removeImage}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ) : (
+                    <label className="flex flex-col items-center justify-center h-32 border-2 border-dashed rounded-lg cursor-pointer hover:bg-accent/5 transition-colors">
+                      <Upload className="h-8 w-8 text-muted-foreground mb-2" />
+                      <span className="text-sm text-muted-foreground">Click to upload image</span>
+                      <span className="text-xs text-muted-foreground mt-1">Max 5MB</span>
+                      <input
+                        id="edit-image"
+                        type="file"
+                        accept="image/*"
+                        onChange={handleImageChange}
+                        className="hidden"
+                      />
+                    </label>
+                  )}
+                </div>
               </div>
 
               <Button type="submit" className="w-full bg-gradient-primary">
