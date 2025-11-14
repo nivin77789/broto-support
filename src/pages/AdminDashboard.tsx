@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { LogOut, Filter, TrendingUp, Building2, Plus, ArrowRight } from "lucide-react";
+import { LogOut, Filter, TrendingUp, Building2, Plus, ArrowRight, Download } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import * as XLSX from 'xlsx';
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { ComplaintCard } from "@/components/ComplaintCard";
 import { supabase } from "@/integrations/supabase/client";
@@ -170,6 +171,40 @@ const AdminDashboard = () => {
       .slice(0, 10);
   };
 
+  const downloadHubComplaints = (hubId: string, status: 'Pending' | 'Resolved', e: React.MouseEvent) => {
+    e.stopPropagation();
+    
+    const hubComplaints = complaints.filter(c => 
+      c.hub_id === hubId && c.status === status
+    );
+
+    if (hubComplaints.length === 0) {
+      toast.error(`No ${status.toLowerCase()} complaints to download`);
+      return;
+    }
+
+    const hub = hubs.find(h => h.id === hubId);
+    const excelData = hubComplaints.map(complaint => ({
+      'Title': complaint.title,
+      'Category': complaint.category,
+      'Status': complaint.status,
+      'Student': profiles[complaint.student_id] || 'Unknown',
+      'Description': complaint.description,
+      'Resolution Note': complaint.resolution_note || 'N/A',
+      'Created At': new Date(complaint.created_at).toLocaleString(),
+      'Has Attachment': complaint.attachment_url ? 'Yes' : 'No',
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(excelData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, `${status} Complaints`);
+    
+    const fileName = `${hub?.name || 'Hub'}_${status}_Complaints_${new Date().toISOString().split('T')[0]}.xlsx`;
+    XLSX.writeFile(workbook, fileName);
+    
+    toast.success(`Downloaded ${hubComplaints.length} ${status.toLowerCase()} complaints`);
+  };
+
   const stats = [
     { label: "Total", value: complaints.length, color: "bg-primary" },
     { label: "Pending", value: getStatusCount("Pending"), color: "bg-warning" },
@@ -277,42 +312,62 @@ const AdminDashboard = () => {
         ) : (
           <div className="grid grid-cols-12 gap-6">
             {/* Left Side - Hub Cards */}
-            <div className="col-span-12 lg:col-span-4 space-y-4">
-              <h2 className="text-xl font-bold mb-4">Hubs</h2>
+            <div className="col-span-12 lg:col-span-4 space-y-3">
+              <h2 className="text-lg font-bold mb-3">Hubs</h2>
               {hubs.map((hub) => {
                 const stats = getHubStats(hub.id);
                 
                 return (
                   <Card 
                     key={hub.id} 
-                    className="p-6 bg-gradient-card cursor-pointer hover:shadow-lg transition-all group"
+                    className="p-4 bg-gradient-card cursor-pointer hover:shadow-lg transition-all group"
                     onClick={() => navigate(`/admin/hub/${hub.id}`)}
                   >
-                    <div className="flex items-start justify-between">
+                    <div className="flex items-start justify-between mb-3">
                       <div className="flex-1">
-                        <h3 className="text-lg font-bold flex items-center gap-2">
-                          <Building2 className="h-5 w-5 text-primary" />
+                        <h3 className="text-base font-bold flex items-center gap-2">
+                          <Building2 className="h-4 w-4 text-primary" />
                           {hub.name}
                         </h3>
                         {hub.location && (
-                          <p className="text-sm text-muted-foreground mt-1">{hub.location}</p>
+                          <p className="text-xs text-muted-foreground mt-0.5">{hub.location}</p>
                         )}
                       </div>
-                      <ArrowRight className="h-5 w-5 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all" />
+                      <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all" />
                     </div>
-                    <div className="flex gap-4 mt-4">
+                    <div className="flex gap-3 mb-3">
                       <div className="text-center">
-                        <p className="text-2xl font-bold">{stats.total}</p>
+                        <p className="text-xl font-bold">{stats.total}</p>
                         <p className="text-xs text-muted-foreground">Total</p>
                       </div>
                       <div className="text-center">
-                        <p className="text-2xl font-bold text-warning">{stats.pending}</p>
+                        <p className="text-xl font-bold text-warning">{stats.pending}</p>
                         <p className="text-xs text-muted-foreground">Pending</p>
                       </div>
                       <div className="text-center">
-                        <p className="text-2xl font-bold text-success">{stats.resolved}</p>
+                        <p className="text-xl font-bold text-success">{stats.resolved}</p>
                         <p className="text-xs text-muted-foreground">Resolved</p>
                       </div>
+                    </div>
+                    <div className="flex gap-2 border-t pt-3">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="flex-1 h-8 text-xs"
+                        onClick={(e) => downloadHubComplaints(hub.id, 'Pending', e)}
+                      >
+                        <Download className="h-3 w-3 mr-1" />
+                        Pending
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="flex-1 h-8 text-xs"
+                        onClick={(e) => downloadHubComplaints(hub.id, 'Resolved', e)}
+                      >
+                        <Download className="h-3 w-3 mr-1" />
+                        Resolved
+                      </Button>
                     </div>
                   </Card>
                 );
