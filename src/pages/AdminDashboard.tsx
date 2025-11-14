@@ -410,6 +410,17 @@ const AdminDashboard = () => {
                   <p className="mt-2 text-sm">{selectedComplaint.description}</p>
                 </div>
 
+                {selectedComplaint.attachment_url && (
+                  <div>
+                    <Label>Attachment</Label>
+                    <img 
+                      src={selectedComplaint.attachment_url} 
+                      alt="Complaint attachment" 
+                      className="mt-2 w-full max-h-96 object-contain rounded-lg border"
+                    />
+                  </div>
+                )}
+
                 <div className="space-y-2">
                   <Label htmlFor="status">Update Status</Label>
                   <Select 
