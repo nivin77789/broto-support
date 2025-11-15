@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Plus, LogOut, Filter, Pencil, Trash2, Upload, X } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
@@ -72,16 +72,15 @@ const StudentDashboard = () => {
     fetchComplaints();
   }, [user]);
 
-  const filteredComplaintsData = useMemo(() => {
-    if (filterStatus === "all") return complaints;
-    return complaints.filter(c => c.status === filterStatus);
+  useEffect(() => {
+    if (filterStatus === "all") {
+      setFilteredComplaints(complaints);
+    } else {
+      setFilteredComplaints(complaints.filter(c => c.status === filterStatus));
+    }
   }, [filterStatus, complaints]);
 
-  useEffect(() => {
-    setFilteredComplaints(filteredComplaintsData);
-  }, [filteredComplaintsData]);
-
-  const fetchHubs = useCallback(async () => {
+  const fetchHubs = async () => {
     try {
       const { data, error } = await supabase
         .from("hubs")
@@ -93,9 +92,9 @@ const StudentDashboard = () => {
     } catch (error: any) {
       toast.error("Failed to fetch hubs");
     }
-  }, []);
+  };
 
-  const fetchComplaints = useCallback(async () => {
+  const fetchComplaints = async () => {
     if (!user) return;
 
     try {
@@ -113,9 +112,9 @@ const StudentDashboard = () => {
     } finally {
       setLoading(false);
     }
-  }, [user]);
+  };
 
-  const handleImageChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       if (file.size > 5 * 1024 * 1024) {
@@ -125,14 +124,14 @@ const StudentDashboard = () => {
       setImageFile(file);
       setImagePreview(URL.createObjectURL(file));
     }
-  }, []);
+  };
 
-  const removeImage = useCallback(() => {
+  const removeImage = () => {
     setImageFile(null);
     setImagePreview(null);
-  }, []);
+  };
 
-  const uploadImage = useCallback(async (file: File): Promise<string | null> => {
+  const uploadImage = async (file: File): Promise<string | null> => {
     try {
       const fileExt = file.name.split('.').pop();
       const fileName = `${user?.id}-${Date.now()}.${fileExt}`;
@@ -154,9 +153,9 @@ const StudentDashboard = () => {
       toast.error("Failed to upload image");
       return null;
     }
-  }, [user]);
+  };
 
-  const handleSubmit = useCallback(async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     try {
@@ -194,15 +193,13 @@ const StudentDashboard = () => {
         toast.error("Failed to submit complaint");
       }
     }
-  }, [formData, imageFile, user, fetchComplaints, uploadImage]);
+  };
 
-  const statusCounts = useMemo(() => ({
-    pending: complaints.filter(c => c.status === "Pending").length,
-    inReview: complaints.filter(c => c.status === "In Review").length,
-    resolved: complaints.filter(c => c.status === "Resolved").length,
-  }), [complaints]);
+  const getStatusCount = (status: string) => {
+    return complaints.filter(c => c.status === status).length;
+  };
 
-  const handleEdit = useCallback((complaint: any) => {
+  const handleEdit = (complaint: any) => {
     setEditingComplaint(complaint);
     setFormData({
       title: complaint.title,
@@ -211,9 +208,9 @@ const StudentDashboard = () => {
       hub_id: complaint.hub_id || "",
     });
     setEditOpen(true);
-  }, []);
+  };
 
-  const handleUpdate = useCallback(async (e: React.FormEvent) => {
+  const handleUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
 
     try {
@@ -254,9 +251,9 @@ const StudentDashboard = () => {
         toast.error("Failed to update complaint");
       }
     }
-  }, [editingComplaint, formData, imageFile, fetchComplaints, uploadImage]);
+  };
 
-  const handleDelete = useCallback(async () => {
+  const handleDelete = async () => {
     if (!selectedComplaint) return;
 
     try {
@@ -274,7 +271,7 @@ const StudentDashboard = () => {
     } catch (error) {
       toast.error("Failed to delete complaint");
     }
-  }, [selectedComplaint, fetchComplaints]);
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -305,9 +302,9 @@ const StudentDashboard = () => {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All ({complaints.length})</SelectItem>
-                <SelectItem value="Pending">Pending ({statusCounts.pending})</SelectItem>
-                <SelectItem value="In Review">In Review ({statusCounts.inReview})</SelectItem>
-                <SelectItem value="Resolved">Resolved ({statusCounts.resolved})</SelectItem>
+                <SelectItem value="Pending">Pending ({getStatusCount("Pending")})</SelectItem>
+                <SelectItem value="In Review">In Review ({getStatusCount("In Review")})</SelectItem>
+                <SelectItem value="Resolved">Resolved ({getStatusCount("Resolved")})</SelectItem>
               </SelectContent>
             </Select>
           </div>

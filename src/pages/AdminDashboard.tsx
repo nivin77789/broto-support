@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { LogOut, Filter, TrendingUp, Building2, Plus, ArrowRight, Download } from "lucide-react";
@@ -46,7 +46,7 @@ const AdminDashboard = () => {
     fetchComplaints();
   }, []);
 
-  const fetchHubs = useCallback(async () => {
+  const fetchHubs = async () => {
     try {
       const { data, error } = await supabase
         .from("hubs")
@@ -58,22 +58,26 @@ const AdminDashboard = () => {
     } catch (error: any) {
       toast.error("Failed to fetch hubs");
     }
-  }, []);
+  };
 
-  const fetchComplaints = useCallback(async () => {
+  const fetchComplaints = async () => {
     try {
       const { data, error } = await supabase
         .from("complaints")
-        .select("*, profiles!complaints_student_id_fkey(name)")
+        .select("*")
         .order("created_at", { ascending: false });
 
       if (error) throw error;
 
+      const studentIds = [...new Set(data?.map(c => c.student_id) || [])];
+      const { data: profilesData } = await supabase
+        .from("profiles")
+        .select("id, name")
+        .in("id", studentIds);
+
       const profilesMap: Record<string, string> = {};
-      data?.forEach((c: any) => {
-        if (c.profiles?.name) {
-          profilesMap[c.student_id] = c.profiles.name;
-        }
+      profilesData?.forEach(p => {
+        profilesMap[p.id] = p.name;
       });
 
       setProfiles(profilesMap);
@@ -83,37 +87,19 @@ const AdminDashboard = () => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  };
 
-  const categories = useMemo(() => ["Communication", "Hub", "Review", "Payments", "Others"], []);
+  const getComplaintsByHub = (hubId: string | null) => {
+    return complaints.filter(c => c.hub_id === hubId);
+  };
 
-  const hubStats = useMemo(() => {
-    const stats = new Map();
-    hubs.forEach(hub => {
-      const hubComplaints = complaints.filter(c => c.hub_id === hub.id);
-      stats.set(hub.id, {
-        total: hubComplaints.length,
-        pending: hubComplaints.filter(c => c.status === "Pending").length,
-        resolved: hubComplaints.filter(c => c.status === "Resolved").length,
-      });
-    });
-    return stats;
-  }, [complaints, hubs]);
+  const getComplaintsByCategory = (hubComplaints: any[], category: string) => {
+    return hubComplaints.filter(c => c.category === category);
+  };
 
-  const complaintStats = useMemo(() => ({
-    total: complaints.length,
-    pending: complaints.filter(c => c.status === "Pending").length,
-    inReview: complaints.filter(c => c.status === "In Review").length,
-    resolved: complaints.filter(c => c.status === "Resolved").length,
-  }), [complaints]);
+  const categories = ["Communication", "Hub", "Review", "Payments", "Others"];
 
-  const newComplaints = useMemo(() => 
-    complaints
-      .filter(c => c.status === "Pending")
-      .slice(0, 10)
-  , [complaints]);
-
-  const handleAddHub = useCallback(async (e: React.FormEvent) => {
+  const handleAddHub = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newHub.name.trim()) {
       toast.error("Hub name is required");
@@ -135,9 +121,9 @@ const AdminDashboard = () => {
     } catch (error: any) {
       toast.error(error.message || "Failed to add hub");
     }
-  }, [newHub, fetchHubs]);
+  };
 
-  const handleUpdateComplaint = useCallback(async () => {
+  const handleUpdateComplaint = async () => {
     if (!selectedComplaint || !updateStatus) return;
 
     try {
@@ -159,9 +145,33 @@ const AdminDashboard = () => {
     } catch (error) {
       toast.error("Failed to update complaint");
     }
-  }, [selectedComplaint, updateStatus, resolutionNote, fetchComplaints]);
+  };
 
-  const downloadHubComplaints = useCallback((hubId: string, status: 'Pending' | 'Resolved', e: React.MouseEvent) => {
+  const getStatusCount = (status: string) => {
+    return complaints.filter(c => c.status === status).length;
+  };
+
+  const getCategoryCount = (category: string) => {
+    return complaints.filter(c => c.category === category).length;
+  };
+
+  const getHubStats = (hubId: string) => {
+    const hubComplaints = getComplaintsByHub(hubId);
+    return {
+      total: hubComplaints.length,
+      pending: hubComplaints.filter(c => c.status === "Pending").length,
+      resolved: hubComplaints.filter(c => c.status === "Resolved").length,
+    };
+  };
+
+  const getNewComplaints = () => {
+    return complaints
+      .filter(c => c.status === "Pending")
+      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+      .slice(0, 10);
+  };
+
+  const downloadHubComplaints = (hubId: string, status: 'Pending' | 'Resolved', e: React.MouseEvent) => {
     e.stopPropagation();
     
     const hubComplaints = complaints.filter(c => 
@@ -193,14 +203,14 @@ const AdminDashboard = () => {
     XLSX.writeFile(workbook, fileName);
     
     toast.success(`Downloaded ${hubComplaints.length} ${status.toLowerCase()} complaints`);
-  }, [complaints, hubs, profiles]);
+  };
 
-  const stats = useMemo(() => [
-    { label: "Total", value: complaintStats.total, color: "bg-primary" },
-    { label: "Pending", value: complaintStats.pending, color: "bg-warning" },
-    { label: "In Review", value: complaintStats.inReview, color: "bg-primary" },
-    { label: "Resolved", value: complaintStats.resolved, color: "bg-success" },
-  ], [complaintStats]);
+  const stats = [
+    { label: "Total", value: complaints.length, color: "bg-primary" },
+    { label: "Pending", value: getStatusCount("Pending"), color: "bg-warning" },
+    { label: "In Review", value: getStatusCount("In Review"), color: "bg-primary" },
+    { label: "Resolved", value: getStatusCount("Resolved"), color: "bg-success" },
+  ];
 
   return (
     <div className="min-h-screen bg-background">
@@ -305,7 +315,7 @@ const AdminDashboard = () => {
             <div className="col-span-12 lg:col-span-4 space-y-3">
               <h2 className="text-lg font-bold mb-3">Hubs</h2>
               {hubs.map((hub) => {
-                const stats = hubStats.get(hub.id) || { total: 0, pending: 0, resolved: 0 };
+                const stats = getHubStats(hub.id);
                 
                 return (
                   <Card 
@@ -369,11 +379,11 @@ const AdminDashboard = () => {
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-xl font-bold">Recent Pending Complaints</h2>
                 <Badge variant="secondary" className="text-lg px-4 py-2">
-                  {newComplaints.length} New
+                  {getNewComplaints().length} New
                 </Badge>
               </div>
 
-              {newComplaints.length === 0 ? (
+              {getNewComplaints().length === 0 ? (
                 <Card className="p-12 bg-gradient-card">
                   <div className="text-center text-muted-foreground">
                     <TrendingUp className="h-12 w-12 mx-auto mb-4 opacity-50" />
@@ -382,7 +392,7 @@ const AdminDashboard = () => {
                 </Card>
               ) : (
                 <div className="space-y-4">
-                  {newComplaints.map((complaint) => (
+                  {getNewComplaints().map((complaint) => (
                     <Card 
                       key={complaint.id}
                       className="p-4 bg-gradient-card hover:shadow-md transition-shadow"
