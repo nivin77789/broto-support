@@ -4,6 +4,7 @@ import { Plus, LogOut, Filter, Pencil, Trash2, Upload, X } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { ComplaintCard } from "@/components/ComplaintCard";
+import { ComplaintChatbot } from "@/components/ComplaintChatbot";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import {
@@ -649,6 +650,7 @@ const StudentDashboard = () => {
           </AlertDialogContent>
         </AlertDialog>
       </main>
+      <ComplaintChatbot />
     </div>
   );
 };

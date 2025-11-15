@@ -1,1 +1,4 @@
 project_id = "kiooenicincblnxyvudk"
+
+[functions.complaint-chat]
+verify_jwt = false
