@@ -128,11 +128,21 @@ const AdminLogin = () => {
           </Button>
         </form>
 
-        <div className="mt-6 p-4 bg-destructive/10 rounded-lg border border-destructive/20">
-          <p className="text-xs text-center text-muted-foreground">
-            This portal is restricted to authorized administrators only.
-            Unauthorized access attempts are logged.
-          </p>
+        <div className="mt-6 space-y-3">
+          <div className="p-4 bg-primary/10 rounded-lg border border-primary/20">
+            <p className="text-sm font-semibold text-center mb-2">Test Admin Credentials</p>
+            <div className="space-y-1 text-sm">
+              <p className="text-center"><span className="font-medium">Email:</span> super@admin.com</p>
+              <p className="text-center"><span className="font-medium">Password:</span> super</p>
+            </div>
+          </div>
+          
+          <div className="p-4 bg-destructive/10 rounded-lg border border-destructive/20">
+            <p className="text-xs text-center text-muted-foreground">
+              This portal is restricted to authorized administrators only.
+              Unauthorized access attempts are logged.
+            </p>
+          </div>
         </div>
       </Card>
     </div>
