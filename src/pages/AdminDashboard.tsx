@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { LogOut, Filter, TrendingUp, Building2, Plus, ArrowRight, Download } from "lucide-react";
+import { LogOut, Filter, TrendingUp, Building2, Plus, ArrowRight, Download, MessageSquare } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import * as XLSX from 'xlsx';
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { ComplaintCard } from "@/components/ComplaintCard";
+import { ComplaintChat } from "@/components/ComplaintChat";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import {
@@ -29,7 +30,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
 const AdminDashboard = () => {
-  const { signOut } = useAuth();
+  const { signOut, user } = useAuth();
   const navigate = useNavigate();
   const [complaints, setComplaints] = useState<any[]>([]);
   const [profiles, setProfiles] = useState<Record<string, string>>({});
@@ -40,6 +41,8 @@ const AdminDashboard = () => {
   const [resolutionNote, setResolutionNote] = useState("");
   const [hubDialogOpen, setHubDialogOpen] = useState(false);
   const [newHub, setNewHub] = useState({ name: "", location: "" });
+  const [chatDialogOpen, setChatDialogOpen] = useState(false);
+  const [chatComplaint, setChatComplaint] = useState<any>(null);
 
   useEffect(() => {
     fetchHubs();
@@ -474,6 +477,14 @@ const AdminDashboard = () => {
                       className="mt-2 w-full max-h-96 object-contain rounded-lg border"
                     />
                   </div>
+                )}
+
+                {user && (
+                  <ComplaintChat
+                    complaintId={selectedComplaint.id}
+                    currentUserId={user.id}
+                    currentUserName="Admin"
+                  />
                 )}
 
                 <div className="space-y-2">

@@ -5,6 +5,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { ComplaintCard } from "@/components/ComplaintCard";
 import { ComplaintChatbot } from "@/components/ComplaintChatbot";
+import { ComplaintChat } from "@/components/ComplaintChat";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import {
@@ -485,6 +486,15 @@ const StudentDashboard = () => {
                     </p>
                   </div>
                 )}
+
+                {user && (
+                  <ComplaintChat
+                    complaintId={selectedComplaint.id}
+                    currentUserId={user.id}
+                    currentUserName={user.email || "Student"}
+                  />
+                )}
+
                 <div className="flex gap-2 pt-4">
                   <Button
                     variant="outline"
