@@ -13,6 +13,7 @@ interface ComplaintCardProps {
     description: string;
     resolution_note?: string;
     attachment_url?: string;
+    is_anonymous?: boolean;
   };
   onClick?: () => void;
   showStudent?: boolean;
@@ -56,8 +57,10 @@ export const ComplaintCard = ({ complaint, onClick, showStudent, studentName }: 
             <FileText className="h-4 w-4 text-primary" />
             <h3 className="font-semibold text-lg">{complaint.title}</h3>
           </div>
-          {showStudent && studentName && (
-            <p className="text-sm text-muted-foreground mb-2">Student: {studentName}</p>
+          {showStudent && (
+            <p className="text-sm text-muted-foreground mb-2">
+              Student: {complaint.is_anonymous ? "Anonymous Student" : studentName || "Unknown"}
+            </p>
           )}
         </div>
         <Badge className={getStatusColor(complaint.status)} variant="outline">

@@ -114,9 +114,14 @@ const StudentChat = () => {
                       >
                         <div className="space-y-2">
                           <div className="flex items-start justify-between gap-2">
-                            <h3 className="font-semibold text-sm line-clamp-1">
-                              {complaint.title}
-                            </h3>
+                            <div className="flex items-center gap-2">
+                              <h3 className="font-semibold text-sm line-clamp-1">
+                                {complaint.title}
+                              </h3>
+                              {complaint.is_anonymous && (
+                                <Badge variant="secondary" className="text-xs">Anonymous</Badge>
+                              )}
+                            </div>
                             <Badge
                               className={`${getStatusColor(complaint.status)} text-xs`}
                               variant="outline"
@@ -147,9 +152,14 @@ const StudentChat = () => {
                   <div className="space-y-2">
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
-                        <h2 className="text-xl font-bold">
-                          {selectedComplaint.title}
-                        </h2>
+                        <div className="flex items-center gap-2">
+                          <h2 className="text-xl font-bold">
+                            {selectedComplaint.title}
+                          </h2>
+                          {selectedComplaint.is_anonymous && (
+                            <Badge variant="secondary">Anonymous</Badge>
+                          )}
+                        </div>
                       </div>
                       <Badge
                         className={getStatusColor(selectedComplaint.status)}

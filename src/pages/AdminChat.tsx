@@ -129,7 +129,7 @@ const AdminChat = () => {
                             </Badge>
                           </div>
                           <p className="text-xs text-muted-foreground">
-                            Student: {profiles[complaint.student_id]}
+                            Student: {complaint.is_anonymous ? "Anonymous Student" : profiles[complaint.student_id] || "Unknown"}
                           </p>
                           <p className="text-xs text-muted-foreground line-clamp-2">
                             {complaint.description}
@@ -158,7 +158,7 @@ const AdminChat = () => {
                           {selectedComplaint.title}
                         </h2>
                         <p className="text-sm text-muted-foreground mt-1">
-                          Student: {profiles[selectedComplaint.student_id]}
+                          Student: {selectedComplaint.is_anonymous ? "Anonymous Student" : profiles[selectedComplaint.student_id] || "Unknown"}
                         </p>
                       </div>
                       <Badge
