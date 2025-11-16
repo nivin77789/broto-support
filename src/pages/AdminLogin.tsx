@@ -130,10 +130,10 @@ const AdminLogin = () => {
 
         <div className="mt-6 space-y-3">
           <div className="p-4 bg-primary/10 rounded-lg border border-primary/20">
-            <p className="text-sm font-semibold text-center mb-2">Test Admin Credentials</p>
+            <p className="text-sm font-semibold text-center mb-2">Admin Account</p>
             <div className="space-y-1 text-sm">
-              <p className="text-center"><span className="font-medium">Email:</span> super@admin.com</p>
-              <p className="text-center"><span className="font-medium">Password:</span> super</p>
+              <p className="text-center"><span className="font-medium">Email:</span> nivin77789@gmail.com</p>
+              <p className="text-center text-muted-foreground text-xs mt-1">Use your account password</p>
             </div>
           </div>
           
