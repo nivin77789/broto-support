@@ -12,6 +12,8 @@ import AdminLogin from "./pages/AdminLogin";
 import StudentDashboard from "./pages/StudentDashboard";
 import AdminDashboard from "./pages/AdminDashboard";
 import HubDetails from "./pages/HubDetails";
+import AdminChat from "./pages/AdminChat";
+import StudentChat from "./pages/StudentChat";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -49,6 +51,22 @@ const App = () => (
                 element={
                   <ProtectedRoute requiredRole="admin">
                     <HubDetails />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/chat"
+                element={
+                  <ProtectedRoute requiredRole="admin">
+                    <AdminChat />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/student/chat"
+                element={
+                  <ProtectedRoute requiredRole="student">
+                    <StudentChat />
                   </ProtectedRoute>
                 }
               />

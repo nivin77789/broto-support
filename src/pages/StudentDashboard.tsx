@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Plus, LogOut, Filter, Pencil, Trash2, Upload, X } from "lucide-react";
+import { Plus, LogOut, Filter, Pencil, Trash2, Upload, X, MessageSquare } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { ComplaintCard } from "@/components/ComplaintCard";
@@ -48,6 +49,7 @@ const complaintSchema = z.object({
 
 const StudentDashboard = () => {
   const { user, signOut } = useAuth();
+  const navigate = useNavigate();
   const [complaints, setComplaints] = useState<any[]>([]);
   const [filteredComplaints, setFilteredComplaints] = useState<any[]>([]);
   const [hubs, setHubs] = useState<any[]>([]);
@@ -286,6 +288,10 @@ const StudentDashboard = () => {
             <p className="text-sm text-muted-foreground mt-1">Manage your complaints</p>
           </div>
           <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={() => navigate("/student/chat")}>
+              <MessageSquare className="h-4 w-4 mr-2" />
+              Chats
+            </Button>
             <ThemeToggle />
             <Button variant="ghost" size="icon" onClick={signOut}>
               <LogOut className="h-5 w-5" />
