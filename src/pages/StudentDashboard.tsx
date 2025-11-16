@@ -29,6 +29,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select,
   SelectContent,
@@ -66,6 +67,7 @@ const StudentDashboard = () => {
     category: "",
     description: "",
     hub_id: "",
+    is_anonymous: false,
   });
 
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -180,13 +182,14 @@ const StudentDashboard = () => {
         description: validatedData.description,
         attachment_url: attachmentUrl,
         hub_id: formData.hub_id || null,
+        is_anonymous: formData.is_anonymous,
       });
 
       if (error) throw error;
 
       toast.success("Complaint submitted successfully!");
       setOpen(false);
-      setFormData({ title: "", category: "", description: "", hub_id: "" });
+      setFormData({ title: "", category: "", description: "", hub_id: "", is_anonymous: false });
       setImageFile(null);
       setImagePreview(null);
       fetchComplaints();
@@ -210,6 +213,7 @@ const StudentDashboard = () => {
       category: complaint.category,
       description: complaint.description,
       hub_id: complaint.hub_id || "",
+      is_anonymous: complaint.is_anonymous || false,
     });
     setEditOpen(true);
   };
@@ -244,7 +248,7 @@ const StudentDashboard = () => {
       toast.success("Complaint updated successfully!");
       setEditOpen(false);
       setEditingComplaint(null);
-      setFormData({ title: "", category: "", description: "", hub_id: "" });
+      setFormData({ title: "", category: "", description: "", hub_id: "", is_anonymous: false });
       setImageFile(null);
       setImagePreview(null);
       fetchComplaints();
@@ -431,6 +435,17 @@ const StudentDashboard = () => {
                       </label>
                     )}
                   </div>
+                </div>
+
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="anonymous"
+                    checked={formData.is_anonymous}
+                    onCheckedChange={(checked) => setFormData({ ...formData, is_anonymous: checked as boolean })}
+                  />
+                  <Label htmlFor="anonymous" className="text-sm font-normal cursor-pointer">
+                    Submit anonymously (your identity will be hidden)
+                  </Label>
                 </div>
 
                 <Button type="submit" className="w-full bg-gradient-primary">

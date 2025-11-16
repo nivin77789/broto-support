@@ -22,6 +22,7 @@ export type Database = {
           description: string
           hub_id: string | null
           id: string
+          is_anonymous: boolean
           resolution_note: string | null
           status: Database["public"]["Enums"]["complaint_status"]
           student_id: string
@@ -35,6 +36,7 @@ export type Database = {
           description: string
           hub_id?: string | null
           id?: string
+          is_anonymous?: boolean
           resolution_note?: string | null
           status?: Database["public"]["Enums"]["complaint_status"]
           student_id: string
@@ -48,6 +50,7 @@ export type Database = {
           description?: string
           hub_id?: string | null
           id?: string
+          is_anonymous?: boolean
           resolution_note?: string | null
           status?: Database["public"]["Enums"]["complaint_status"]
           student_id?: string
