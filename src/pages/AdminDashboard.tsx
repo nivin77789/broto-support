@@ -335,16 +335,16 @@ const AdminDashboard = () => {
       </header>
 
       <main className="container mx-auto px-4 py-8">
-        <div className="grid gap-4 md:grid-cols-4 mb-8">
+        <div className="grid gap-3 md:grid-cols-4 mb-6">
           {stats.map((stat) => (
-            <Card key={stat.label} className="p-6 bg-gradient-card">
+            <Card key={stat.label} className="p-4 bg-gradient-card">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground">{stat.label}</p>
-                  <p className="text-3xl font-bold mt-1">{stat.value}</p>
+                  <p className="text-xs text-muted-foreground">{stat.label}</p>
+                  <p className="text-2xl font-bold mt-1">{stat.value}</p>
                 </div>
-                <div className={`h-12 w-12 rounded-full ${stat.color}/10 flex items-center justify-center`}>
-                  <TrendingUp className={`h-6 w-6 ${stat.color.replace('bg-', 'text-')}`} />
+                <div className={`h-10 w-10 rounded-full ${stat.color}/10 flex items-center justify-center`}>
+                  <TrendingUp className={`h-5 w-5 ${stat.color.replace('bg-', 'text-')}`} />
                 </div>
               </div>
             </Card>
@@ -368,32 +368,32 @@ const AdminDashboard = () => {
                     return (
                       <Card 
                         key={hub.id} 
-                        className="p-4 bg-gradient-card cursor-pointer hover:shadow-lg transition-all group"
+                        className="p-3 bg-gradient-card cursor-pointer hover:shadow-lg transition-all group"
                         onClick={() => navigate(`/admin/hub/${hub.id}`)}
                       >
-                        <div className="flex items-start justify-between mb-3">
+                        <div className="flex items-start justify-between mb-2">
                           <div className="flex-1">
-                            <h3 className="text-base font-bold flex items-center gap-2">
-                              <Building2 className="h-4 w-4 text-primary" />
+                            <h3 className="text-sm font-bold flex items-center gap-1.5">
+                              <Building2 className="h-3.5 w-3.5 text-primary" />
                               {hub.name}
                             </h3>
                             {hub.location && (
                               <p className="text-xs text-muted-foreground mt-0.5">{hub.location}</p>
                             )}
                           </div>
-                          <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all" />
+                          <ArrowRight className="h-3.5 w-3.5 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all" />
                         </div>
-                        <div className="flex gap-3 mb-3">
-                          <div className="text-center">
-                            <p className="text-xl font-bold">{stats.total}</p>
+                        <div className="flex gap-2">
+                          <div className="text-center flex-1">
+                            <p className="text-lg font-bold">{stats.total}</p>
                             <p className="text-xs text-muted-foreground">Total</p>
                           </div>
-                          <div className="text-center">
-                            <p className="text-xl font-bold text-warning">{stats.pending}</p>
+                          <div className="text-center flex-1">
+                            <p className="text-lg font-bold text-warning">{stats.pending}</p>
                             <p className="text-xs text-muted-foreground">Pending</p>
                           </div>
-                          <div className="text-center">
-                            <p className="text-xl font-bold text-success">{stats.resolved}</p>
+                          <div className="text-center flex-1">
+                            <p className="text-lg font-bold text-success">{stats.resolved}</p>
                             <p className="text-xs text-muted-foreground">Resolved</p>
                           </div>
                         </div>
