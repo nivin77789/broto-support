@@ -360,7 +360,52 @@ const AdminDashboard = () => {
                         className="p-4 bg-gradient-card cursor-pointer hover:shadow-lg transition-all group"
                         onClick={() => navigate(`/admin/hub/${hub.id}`)}
                       >
-...
+                        <div className="flex items-start justify-between mb-3">
+                          <div className="flex-1">
+                            <h3 className="text-base font-bold flex items-center gap-2">
+                              <Building2 className="h-4 w-4 text-primary" />
+                              {hub.name}
+                            </h3>
+                            {hub.location && (
+                              <p className="text-xs text-muted-foreground mt-0.5">{hub.location}</p>
+                            )}
+                          </div>
+                          <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all" />
+                        </div>
+                        <div className="flex gap-3 mb-3">
+                          <div className="text-center">
+                            <p className="text-xl font-bold">{stats.total}</p>
+                            <p className="text-xs text-muted-foreground">Total</p>
+                          </div>
+                          <div className="text-center">
+                            <p className="text-xl font-bold text-warning">{stats.pending}</p>
+                            <p className="text-xs text-muted-foreground">Pending</p>
+                          </div>
+                          <div className="text-center">
+                            <p className="text-xl font-bold text-success">{stats.resolved}</p>
+                            <p className="text-xs text-muted-foreground">Resolved</p>
+                          </div>
+                        </div>
+                        <div className="flex gap-2 border-t pt-3">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="flex-1 h-8 text-xs"
+                            onClick={(e) => downloadHubComplaints(hub.id, 'Pending', e)}
+                          >
+                            <Download className="h-3 w-3 mr-1" />
+                            Pending
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="flex-1 h-8 text-xs"
+                            onClick={(e) => downloadHubComplaints(hub.id, 'Resolved', e)}
+                          >
+                            <Download className="h-3 w-3 mr-1" />
+                            Resolved
+                          </Button>
+                        </div>
                       </Card>
                     );
                   })}
