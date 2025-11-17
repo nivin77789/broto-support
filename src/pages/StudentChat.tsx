@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, MessageSquare } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
@@ -14,6 +14,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 const StudentChat = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [complaints, setComplaints] = useState<any[]>([]);
   const [selectedComplaint, setSelectedComplaint] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -23,6 +24,16 @@ const StudentChat = () => {
       fetchComplaints();
     }
   }, [user]);
+
+  useEffect(() => {
+    const complaintId = searchParams.get("complaint");
+    if (complaintId && complaints.length > 0) {
+      const complaint = complaints.find(c => c.id === complaintId);
+      if (complaint) {
+        setSelectedComplaint(complaint);
+      }
+    }
+  }, [searchParams, complaints]);
 
   const fetchComplaints = async () => {
     if (!user) return;

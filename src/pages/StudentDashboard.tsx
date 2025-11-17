@@ -508,13 +508,13 @@ const StudentDashboard = () => {
                   </div>
                 )}
 
-                {user && (
-                  <ComplaintChat
-                    complaintId={selectedComplaint.id}
-                    currentUserId={user.id}
-                    currentUserName={user.email || "Student"}
-                  />
-                )}
+                <Button
+                  onClick={() => navigate(`/student/chat?complaint=${selectedComplaint.id}`)}
+                  className="w-full bg-gradient-primary mb-4"
+                >
+                  <MessageSquare className="h-4 w-4 mr-2" />
+                  Chat
+                </Button>
 
                 <div className="flex gap-2 pt-4">
                   <Button
