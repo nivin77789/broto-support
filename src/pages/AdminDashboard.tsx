@@ -397,26 +397,6 @@ const AdminDashboard = () => {
                             <p className="text-xs text-muted-foreground">Resolved</p>
                           </div>
                         </div>
-                        <div className="flex gap-2 border-t pt-3">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="flex-1 h-8 text-xs"
-                            onClick={(e) => downloadHubComplaints(hub.id, 'Pending', e)}
-                          >
-                            <Download className="h-3 w-3 mr-1" />
-                            Pending
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="flex-1 h-8 text-xs"
-                            onClick={(e) => downloadHubComplaints(hub.id, 'Resolved', e)}
-                          >
-                            <Download className="h-3 w-3 mr-1" />
-                            Resolved
-                          </Button>
-                        </div>
                       </Card>
                     );
                   })}

@@ -1,10 +1,11 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Filter, Building2 } from "lucide-react";
+import { ArrowLeft, Filter, Building2, Download } from "lucide-react";
 import { ComplaintCard } from "@/components/ComplaintCard";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import * as XLSX from 'xlsx';
 import {
   Dialog,
   DialogContent,
@@ -117,6 +118,35 @@ const HubDetails = () => {
     return getFilteredComplaints().filter(c => c.category === category);
   };
 
+  const downloadComplaints = (status: 'Pending' | 'Resolved') => {
+    const filteredComplaints = complaints.filter(c => c.status === status);
+
+    if (filteredComplaints.length === 0) {
+      toast.error(`No ${status.toLowerCase()} complaints to download`);
+      return;
+    }
+
+    const excelData = filteredComplaints.map(complaint => ({
+      'Title': complaint.title,
+      'Category': complaint.category,
+      'Status': complaint.status,
+      'Student': profiles[complaint.student_id] || 'Unknown',
+      'Description': complaint.description,
+      'Resolution Note': complaint.resolution_note || 'N/A',
+      'Created At': new Date(complaint.created_at).toLocaleString(),
+      'Has Attachment': complaint.attachment_url ? 'Yes' : 'No',
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(excelData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, `${status} Complaints`);
+    
+    const fileName = `${hub?.name || 'Hub'}_${status}_Complaints_${new Date().toISOString().split('T')[0]}.xlsx`;
+    XLSX.writeFile(workbook, fileName);
+    
+    toast.success(`Downloaded ${filteredComplaints.length} ${status.toLowerCase()} complaints`);
+  };
+
   const getStats = () => {
     return {
       total: complaints.length,
@@ -171,6 +201,24 @@ const HubDetails = () => {
               {hub.location && (
                 <p className="text-sm text-muted-foreground mt-1">{hub.location}</p>
               )}
+            </div>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => downloadComplaints('Pending')}
+              >
+                <Download className="h-4 w-4 mr-2" />
+                Pending
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => downloadComplaints('Resolved')}
+              >
+                <Download className="h-4 w-4 mr-2" />
+                Resolved
+              </Button>
             </div>
           </div>
         </div>
