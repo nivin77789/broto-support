@@ -1,10 +1,11 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, MessageSquare } from "lucide-react";
+import { ArrowLeft, MessageSquare, AlertCircle } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { ComplaintChat } from "@/components/ComplaintChat";
+import { ImagePreview } from "@/components/ImagePreview";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Card } from "@/components/ui/card";
@@ -161,9 +162,9 @@ const StudentChat = () => {
               <div className="space-y-4">
                 <Card className="p-4 bg-gradient-card">
                   <div className="space-y-2">
-                    <div className="flex items-start justify-between">
+                    <div className="flex items-start justify-between gap-2">
                       <div className="flex-1">
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 flex-wrap">
                           <h2 className="text-xl font-bold">
                             {selectedComplaint.title}
                           </h2>
@@ -172,23 +173,36 @@ const StudentChat = () => {
                           )}
                         </div>
                       </div>
-                      <Badge
-                        className={getStatusColor(selectedComplaint.status)}
-                        variant="outline"
-                      >
-                        {selectedComplaint.status}
-                      </Badge>
+                      <div className="flex flex-col gap-2 items-end">
+                        {selectedComplaint.urgency && selectedComplaint.urgency !== "Normal" && (
+                          <Badge
+                            variant="outline"
+                            className={
+                              selectedComplaint.urgency === "Critical"
+                                ? "bg-destructive/10 text-destructive border-destructive/50 animate-pulse gap-1"
+                                : selectedComplaint.urgency === "High"
+                                ? "bg-orange-500/10 text-orange-600 dark:text-orange-400 border-orange-500/50"
+                                : "bg-slate-500/10 text-slate-600 dark:text-slate-400 border-slate-500/50"
+                            }
+                          >
+                            {selectedComplaint.urgency === "Critical" && <AlertCircle className="h-3 w-3" />}
+                            {selectedComplaint.urgency}
+                          </Badge>
+                        )}
+                        <Badge
+                          className={getStatusColor(selectedComplaint.status)}
+                          variant="outline"
+                        >
+                          {selectedComplaint.status}
+                        </Badge>
+                      </div>
                     </div>
                     <div className="pt-2 border-t">
                       <p className="text-sm">{selectedComplaint.description}</p>
                     </div>
                     {selectedComplaint.attachment_url && (
                       <div className="pt-2">
-                        <img
-                          src={selectedComplaint.attachment_url}
-                          alt="Complaint attachment"
-                          className="w-full max-h-48 object-cover rounded-lg border"
-                        />
+                        <ImagePreview imageUrl={selectedComplaint.attachment_url} alt="Complaint attachment" />
                       </div>
                     )}
                     {selectedComplaint.resolution_note && (

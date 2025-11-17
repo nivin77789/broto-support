@@ -1,12 +1,13 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { LogOut, Filter, TrendingUp, Building2, Plus, ArrowRight, Download, MessageSquare } from "lucide-react";
+import { LogOut, Filter, TrendingUp, Building2, Plus, ArrowRight, Download, MessageSquare, AlertCircle } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import * as XLSX from 'xlsx';
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { ComplaintCard } from "@/components/ComplaintCard";
 import { ComplaintChat } from "@/components/ComplaintChat";
+import { ImagePreview } from "@/components/ImagePreview";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import {
@@ -449,14 +450,29 @@ const AdminDashboard = () => {
             </DialogHeader>
             {selectedComplaint && (
               <div className="space-y-4">
-                <div className="flex gap-2">
+                <div className="flex gap-2 flex-wrap">
                   <Badge variant="outline">{selectedComplaint.category}</Badge>
                   <Badge variant="outline">{selectedComplaint.status}</Badge>
+                  {selectedComplaint.urgency && selectedComplaint.urgency !== "Normal" && (
+                    <Badge
+                      variant="outline"
+                      className={
+                        selectedComplaint.urgency === "Critical"
+                          ? "bg-destructive/10 text-destructive border-destructive/50 animate-pulse gap-1"
+                          : selectedComplaint.urgency === "High"
+                          ? "bg-orange-500/10 text-orange-600 dark:text-orange-400 border-orange-500/50"
+                          : "bg-slate-500/10 text-slate-600 dark:text-slate-400 border-slate-500/50"
+                      }
+                    >
+                      {selectedComplaint.urgency === "Critical" && <AlertCircle className="h-3 w-3" />}
+                      {selectedComplaint.urgency}
+                    </Badge>
+                  )}
                 </div>
                 <div>
                   <Label>Student</Label>
                   <p className="mt-2 text-sm font-medium">
-                    {profiles[selectedComplaint.student_id]}
+                    {selectedComplaint.is_anonymous ? "Anonymous Student" : profiles[selectedComplaint.student_id] || "Unknown"}
                   </p>
                 </div>
                 <div>
@@ -475,11 +491,9 @@ const AdminDashboard = () => {
                 {selectedComplaint.attachment_url && (
                   <div>
                     <Label>Attachment</Label>
-                    <img 
-                      src={selectedComplaint.attachment_url} 
-                      alt="Complaint attachment" 
-                      className="mt-2 w-full max-h-96 object-contain rounded-lg border"
-                    />
+                    <div className="mt-2">
+                      <ImagePreview imageUrl={selectedComplaint.attachment_url} alt="Complaint attachment" />
+                    </div>
                   </div>
                 )}
 

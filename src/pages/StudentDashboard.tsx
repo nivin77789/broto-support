@@ -1,12 +1,13 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Plus, LogOut, Filter, Pencil, Trash2, Upload, X, MessageSquare } from "lucide-react";
+import { Plus, LogOut, Filter, Pencil, Trash2, Upload, X, MessageSquare, AlertCircle } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { ComplaintCard } from "@/components/ComplaintCard";
 import { ComplaintChatbot } from "@/components/ComplaintChatbot";
 import { ComplaintChat } from "@/components/ComplaintChat";
+import { ImagePreview } from "@/components/ImagePreview";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import {
@@ -41,6 +42,7 @@ import { Badge } from "@/components/ui/badge";
 import { z } from "zod";
 
 const categories = ["Communication", "Hub", "Review", "Payments", "Others"];
+const urgencyLevels = ["Low", "Normal", "High", "Critical"];
 
 const complaintSchema = z.object({
   title: z.string().trim().min(3, "Title must be at least 3 characters").max(200, "Title too long"),
@@ -67,6 +69,7 @@ const StudentDashboard = () => {
     category: "",
     description: "",
     hub_id: "",
+    urgency: "Normal",
     is_anonymous: false,
   });
 
@@ -182,6 +185,7 @@ const StudentDashboard = () => {
         description: validatedData.description,
         attachment_url: attachmentUrl,
         hub_id: formData.hub_id || null,
+        urgency: formData.urgency as "Low" | "Normal" | "High" | "Critical",
         is_anonymous: formData.is_anonymous,
       });
 
@@ -189,7 +193,7 @@ const StudentDashboard = () => {
 
       toast.success("Complaint submitted successfully!");
       setOpen(false);
-      setFormData({ title: "", category: "", description: "", hub_id: "", is_anonymous: false });
+      setFormData({ title: "", category: "", description: "", hub_id: "", urgency: "Normal", is_anonymous: false });
       setImageFile(null);
       setImagePreview(null);
       fetchComplaints();
@@ -213,6 +217,7 @@ const StudentDashboard = () => {
       category: complaint.category,
       description: complaint.description,
       hub_id: complaint.hub_id || "",
+      urgency: complaint.urgency || "Normal",
       is_anonymous: complaint.is_anonymous || false,
     });
     setEditOpen(true);
@@ -240,6 +245,7 @@ const StudentDashboard = () => {
           description: validatedData.description,
           attachment_url: attachmentUrl,
           hub_id: formData.hub_id || null,
+          urgency: formData.urgency as "Low" | "Normal" | "High" | "Critical",
         })
         .eq("id", editingComplaint.id);
 
@@ -248,7 +254,7 @@ const StudentDashboard = () => {
       toast.success("Complaint updated successfully!");
       setEditOpen(false);
       setEditingComplaint(null);
-      setFormData({ title: "", category: "", description: "", hub_id: "", is_anonymous: false });
+      setFormData({ title: "", category: "", description: "", hub_id: "", urgency: "Normal", is_anonymous: false });
       setImageFile(null);
       setImagePreview(null);
       fetchComplaints();
@@ -385,6 +391,32 @@ const StudentDashboard = () => {
                 </div>
 
                 <div className="space-y-2">
+                  <Label htmlFor="urgency">Urgency Level</Label>
+                  <Select
+                    value={formData.urgency}
+                    onValueChange={(value) => setFormData({ ...formData, urgency: value })}
+                    required
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select urgency" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {urgencyLevels.map((level) => (
+                        <SelectItem key={level} value={level}>
+                          <div className="flex items-center gap-2">
+                            {level === "Critical" && <AlertCircle className="h-4 w-4 text-destructive" />}
+                            {level}
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-muted-foreground">
+                    Critical and High urgency complaints will be prioritized
+                  </p>
+                </div>
+
+                <div className="space-y-2">
                   <Label htmlFor="description">Description</Label>
                   <Textarea
                     id="description"
@@ -491,14 +523,37 @@ const StudentDashboard = () => {
             </DialogHeader>
             {selectedComplaint && (
               <div className="space-y-4">
-                <div className="flex gap-2">
+                <div className="flex gap-2 flex-wrap">
                   <Badge variant="outline">{selectedComplaint.category}</Badge>
                   <Badge variant="outline">{selectedComplaint.status}</Badge>
+                  {selectedComplaint.urgency && selectedComplaint.urgency !== "Normal" && (
+                    <Badge
+                      variant="outline"
+                      className={
+                        selectedComplaint.urgency === "Critical"
+                          ? "bg-destructive/10 text-destructive border-destructive/50 animate-pulse"
+                          : selectedComplaint.urgency === "High"
+                          ? "bg-orange-500/10 text-orange-600 dark:text-orange-400 border-orange-500/50"
+                          : "bg-slate-500/10 text-slate-600 dark:text-slate-400 border-slate-500/50"
+                      }
+                    >
+                      {selectedComplaint.urgency === "Critical" && <AlertCircle className="h-3 w-3 mr-1" />}
+                      {selectedComplaint.urgency}
+                    </Badge>
+                  )}
                 </div>
                 <div>
                   <Label>Description</Label>
                   <p className="mt-2 text-sm">{selectedComplaint.description}</p>
                 </div>
+                {selectedComplaint.attachment_url && (
+                  <div>
+                    <Label>Attachment</Label>
+                    <div className="mt-2">
+                      <ImagePreview imageUrl={selectedComplaint.attachment_url} alt="Complaint attachment" />
+                    </div>
+                  </div>
+                )}
                 {selectedComplaint.resolution_note && (
                   <div>
                     <Label>Resolution</Label>
@@ -599,6 +654,32 @@ const StudentDashboard = () => {
                     ))}
                   </SelectContent>
                 </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="edit-urgency">Urgency Level</Label>
+                <Select
+                  value={formData.urgency}
+                  onValueChange={(value) => setFormData({ ...formData, urgency: value })}
+                  required
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select urgency" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {urgencyLevels.map((level) => (
+                      <SelectItem key={level} value={level}>
+                        <div className="flex items-center gap-2">
+                          {level === "Critical" && <AlertCircle className="h-4 w-4 text-destructive" />}
+                          {level}
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  Critical and High urgency complaints will be prioritized
+                </p>
               </div>
 
               <div className="space-y-2">

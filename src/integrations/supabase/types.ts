@@ -28,6 +28,7 @@ export type Database = {
           student_id: string
           title: string
           updated_at: string | null
+          urgency: Database["public"]["Enums"]["complaint_urgency"]
         }
         Insert: {
           attachment_url?: string | null
@@ -42,6 +43,7 @@ export type Database = {
           student_id: string
           title: string
           updated_at?: string | null
+          urgency?: Database["public"]["Enums"]["complaint_urgency"]
         }
         Update: {
           attachment_url?: string | null
@@ -56,6 +58,7 @@ export type Database = {
           student_id?: string
           title?: string
           updated_at?: string | null
+          urgency?: Database["public"]["Enums"]["complaint_urgency"]
         }
         Relationships: [
           {
@@ -209,6 +212,7 @@ export type Database = {
         | "Payments"
         | "Others"
       complaint_status: "Pending" | "In Review" | "Resolved"
+      complaint_urgency: "Low" | "Normal" | "High" | "Critical"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -345,6 +349,7 @@ export const Constants = {
         "Others",
       ],
       complaint_status: ["Pending", "In Review", "Resolved"],
+      complaint_urgency: ["Low", "Normal", "High", "Critical"],
     },
   },
 } as const
