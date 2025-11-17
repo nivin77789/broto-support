@@ -1,7 +1,8 @@
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
-import { FileText, Clock, Image as ImageIcon } from "lucide-react";
+import { FileText, Clock, AlertCircle } from "lucide-react";
+import { ImagePreview } from "./ImagePreview";
 
 interface ComplaintCardProps {
   complaint: {
@@ -9,6 +10,7 @@ interface ComplaintCardProps {
     title: string;
     category: string;
     status: string;
+    urgency?: string;
     created_at: string;
     description: string;
     resolution_note?: string;
@@ -29,6 +31,21 @@ export const ComplaintCard = ({ complaint, onClick, showStudent, studentName }: 
         return "bg-primary/10 text-primary border-primary/20";
       case "Resolved":
         return "bg-success/10 text-success border-success/20";
+      default:
+        return "bg-muted text-muted-foreground";
+    }
+  };
+
+  const getUrgencyColor = (urgency: string) => {
+    switch (urgency) {
+      case "Critical":
+        return "bg-destructive/10 text-destructive border-destructive/50 animate-pulse";
+      case "High":
+        return "bg-orange-500/10 text-orange-600 dark:text-orange-400 border-orange-500/50";
+      case "Normal":
+        return "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/50";
+      case "Low":
+        return "bg-slate-500/10 text-slate-600 dark:text-slate-400 border-slate-500/50";
       default:
         return "bg-muted text-muted-foreground";
     }
@@ -63,9 +80,20 @@ export const ComplaintCard = ({ complaint, onClick, showStudent, studentName }: 
             </p>
           )}
         </div>
-        <Badge className={getStatusColor(complaint.status)} variant="outline">
-          {complaint.status}
-        </Badge>
+        <div className="flex flex-col gap-2 items-end">
+          {complaint.urgency && complaint.urgency !== "Normal" && (
+            <Badge
+              className={`${getUrgencyColor(complaint.urgency)} gap-1 text-xs`}
+              variant="outline"
+            >
+              {complaint.urgency === "Critical" && <AlertCircle className="h-3 w-3" />}
+              {complaint.urgency}
+            </Badge>
+          )}
+          <Badge className={getStatusColor(complaint.status)} variant="outline">
+            {complaint.status}
+          </Badge>
+        </div>
       </div>
 
       <p className="text-sm text-muted-foreground mb-4 line-clamp-2">
@@ -74,11 +102,7 @@ export const ComplaintCard = ({ complaint, onClick, showStudent, studentName }: 
 
       {complaint.attachment_url && (
         <div className="mb-4">
-          <img 
-            src={complaint.attachment_url} 
-            alt="Complaint attachment" 
-            className="w-full h-40 object-cover rounded-lg border"
-          />
+          <ImagePreview imageUrl={complaint.attachment_url} alt="Complaint attachment" />
         </div>
       )}
 
