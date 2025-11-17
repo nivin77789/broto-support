@@ -14,6 +14,7 @@ import AdminDashboard from "./pages/AdminDashboard";
 import HubDetails from "./pages/HubDetails";
 import AdminChat from "./pages/AdminChat";
 import StudentChat from "./pages/StudentChat";
+import Analytics from "./pages/Analytics";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -59,6 +60,14 @@ const App = () => (
                 element={
                   <ProtectedRoute requiredRole="admin">
                     <AdminChat />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/analytics"
+                element={
+                  <ProtectedRoute requiredRole="admin">
+                    <Analytics />
                   </ProtectedRoute>
                 }
               />
