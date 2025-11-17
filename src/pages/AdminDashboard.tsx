@@ -483,13 +483,13 @@ const AdminDashboard = () => {
                   </div>
                 )}
 
-                {user && (
-                  <ComplaintChat
-                    complaintId={selectedComplaint.id}
-                    currentUserId={user.id}
-                    currentUserName="Admin"
-                  />
-                )}
+                <Button
+                  onClick={() => navigate(`/admin/chat?complaint=${selectedComplaint.id}`)}
+                  className="w-full bg-gradient-primary"
+                >
+                  <MessageSquare className="h-4 w-4 mr-2" />
+                  Chat with Student
+                </Button>
 
                 <div className="space-y-2">
                   <Label htmlFor="status">Update Status</Label>
