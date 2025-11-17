@@ -419,9 +419,9 @@ const AdminDashboard = () => {
             {/* Right Side - Complaints */}
             <div className="col-span-12 lg:col-span-8">
               <div className="flex flex-col gap-4 mb-6">
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between flex-wrap gap-2">
                   <h2 className="text-xl font-bold">Complaints</h2>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-wrap">
                     <Button
                       variant={showStarredOnly ? "default" : "outline"}
                       size="sm"
@@ -431,6 +431,63 @@ const AdminDashboard = () => {
                       <Star className={`h-4 w-4 ${showStarredOnly ? "fill-current" : ""}`} />
                       {showStarredOnly ? "Show All" : "Starred"}
                     </Button>
+                    
+                    <div className="h-6 w-px bg-border" />
+                    
+                    <Button
+                      variant={showAnonymousOnly ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setShowAnonymousOnly(!showAnonymousOnly)}
+                      className="gap-2"
+                    >
+                      <AlertCircle className="h-3.5 w-3.5" />
+                      Anonymous
+                      <Badge variant="secondary" className="ml-1">
+                        {complaints.filter(c => c.is_anonymous).length}
+                      </Badge>
+                    </Button>
+                    
+                    <Select value={urgencyFilter} onValueChange={(value: any) => setUrgencyFilter(value)}>
+                      <SelectTrigger className="w-[180px] h-9">
+                        <SelectValue placeholder="Select urgency" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-popover z-50">
+                        <SelectItem value="All">All Urgency</SelectItem>
+                        <SelectItem value="Low">
+                          <div className="flex items-center justify-between w-full">
+                            <span>Low</span>
+                            <Badge variant="secondary" className="ml-2">
+                              {complaints.filter(c => c.urgency === "Low").length}
+                            </Badge>
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="Normal">
+                          <div className="flex items-center justify-between w-full">
+                            <span>Normal</span>
+                            <Badge variant="secondary" className="ml-2">
+                              {complaints.filter(c => c.urgency === "Normal").length}
+                            </Badge>
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="High">
+                          <div className="flex items-center justify-between w-full">
+                            <span>High</span>
+                            <Badge variant="secondary" className="ml-2">
+                              {complaints.filter(c => c.urgency === "High").length}
+                            </Badge>
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="Critical">
+                          <div className="flex items-center justify-between w-full">
+                            <span>Critical</span>
+                            <Badge variant="secondary" className="ml-2">
+                              {complaints.filter(c => c.urgency === "Critical").length}
+                            </Badge>
+                          </div>
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                    
                     <Badge variant="secondary" className="text-lg px-4 py-2">
                       {getNewComplaints().length}
                     </Badge>
@@ -478,65 +535,6 @@ const AdminDashboard = () => {
                       {complaints.filter(c => c.status === "Resolved").length}
                     </Badge>
                   </Button>
-                </div>
-
-                <div className="flex gap-2 flex-wrap items-center">
-                  <span className="text-sm text-muted-foreground">Filters:</span>
-                  <Button
-                    variant={showAnonymousOnly ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setShowAnonymousOnly(!showAnonymousOnly)}
-                    className="gap-2"
-                  >
-                    <AlertCircle className="h-3.5 w-3.5" />
-                    Anonymous
-                    <Badge variant="secondary" className="ml-1">
-                      {complaints.filter(c => c.is_anonymous).length}
-                    </Badge>
-                  </Button>
-                  
-                  <div className="h-4 w-px bg-border" />
-                  
-                  <Select value={urgencyFilter} onValueChange={(value: any) => setUrgencyFilter(value)}>
-                    <SelectTrigger className="w-[180px] h-9">
-                      <SelectValue placeholder="Select urgency" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-popover z-50">
-                      <SelectItem value="All">All Urgency</SelectItem>
-                      <SelectItem value="Low">
-                        <div className="flex items-center justify-between w-full">
-                          <span>Low</span>
-                          <Badge variant="secondary" className="ml-2">
-                            {complaints.filter(c => c.urgency === "Low").length}
-                          </Badge>
-                        </div>
-                      </SelectItem>
-                      <SelectItem value="Normal">
-                        <div className="flex items-center justify-between w-full">
-                          <span>Normal</span>
-                          <Badge variant="secondary" className="ml-2">
-                            {complaints.filter(c => c.urgency === "Normal").length}
-                          </Badge>
-                        </div>
-                      </SelectItem>
-                      <SelectItem value="High">
-                        <div className="flex items-center justify-between w-full">
-                          <span>High</span>
-                          <Badge variant="secondary" className="ml-2">
-                            {complaints.filter(c => c.urgency === "High").length}
-                          </Badge>
-                        </div>
-                      </SelectItem>
-                      <SelectItem value="Critical">
-                        <div className="flex items-center justify-between w-full">
-                          <span>Critical</span>
-                          <Badge variant="secondary" className="ml-2">
-                            {complaints.filter(c => c.urgency === "Critical").length}
-                          </Badge>
-                        </div>
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
                 </div>
               </div>
 
