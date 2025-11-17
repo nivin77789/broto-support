@@ -497,57 +497,46 @@ const AdminDashboard = () => {
                   
                   <div className="h-4 w-px bg-border" />
                   
-                  <Button
-                    variant={urgencyFilter === "All" ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setUrgencyFilter("All")}
-                  >
-                    All Urgency
-                  </Button>
-                  <Button
-                    variant={urgencyFilter === "Low" ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setUrgencyFilter("Low")}
-                    className="gap-2"
-                  >
-                    Low
-                    <Badge variant="secondary" className="ml-1">
-                      {complaints.filter(c => c.urgency === "Low").length}
-                    </Badge>
-                  </Button>
-                  <Button
-                    variant={urgencyFilter === "Normal" ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setUrgencyFilter("Normal")}
-                    className="gap-2"
-                  >
-                    Normal
-                    <Badge variant="secondary" className="ml-1">
-                      {complaints.filter(c => c.urgency === "Normal").length}
-                    </Badge>
-                  </Button>
-                  <Button
-                    variant={urgencyFilter === "High" ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setUrgencyFilter("High")}
-                    className="gap-2"
-                  >
-                    High
-                    <Badge variant="secondary" className="ml-1">
-                      {complaints.filter(c => c.urgency === "High").length}
-                    </Badge>
-                  </Button>
-                  <Button
-                    variant={urgencyFilter === "Critical" ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setUrgencyFilter("Critical")}
-                    className="gap-2"
-                  >
-                    Critical
-                    <Badge variant="secondary" className="ml-1">
-                      {complaints.filter(c => c.urgency === "Critical").length}
-                    </Badge>
-                  </Button>
+                  <Select value={urgencyFilter} onValueChange={(value: any) => setUrgencyFilter(value)}>
+                    <SelectTrigger className="w-[180px] h-9">
+                      <SelectValue placeholder="Select urgency" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-popover z-50">
+                      <SelectItem value="All">All Urgency</SelectItem>
+                      <SelectItem value="Low">
+                        <div className="flex items-center justify-between w-full">
+                          <span>Low</span>
+                          <Badge variant="secondary" className="ml-2">
+                            {complaints.filter(c => c.urgency === "Low").length}
+                          </Badge>
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="Normal">
+                        <div className="flex items-center justify-between w-full">
+                          <span>Normal</span>
+                          <Badge variant="secondary" className="ml-2">
+                            {complaints.filter(c => c.urgency === "Normal").length}
+                          </Badge>
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="High">
+                        <div className="flex items-center justify-between w-full">
+                          <span>High</span>
+                          <Badge variant="secondary" className="ml-2">
+                            {complaints.filter(c => c.urgency === "High").length}
+                          </Badge>
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="Critical">
+                        <div className="flex items-center justify-between w-full">
+                          <span>Critical</span>
+                          <Badge variant="secondary" className="ml-2">
+                            {complaints.filter(c => c.urgency === "Critical").length}
+                          </Badge>
+                        </div>
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
 
