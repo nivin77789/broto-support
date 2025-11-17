@@ -47,6 +47,8 @@ const AdminDashboard = () => {
   const [chatComplaint, setChatComplaint] = useState<any>(null);
   const [showStarredOnly, setShowStarredOnly] = useState(false);
   const [statusFilter, setStatusFilter] = useState<"All" | "Pending" | "In Review" | "Resolved">("Pending");
+  const [showAnonymousOnly, setShowAnonymousOnly] = useState(false);
+  const [urgencyFilter, setUrgencyFilter] = useState<"All" | "Low" | "Normal" | "High" | "Critical">("All");
 
   useEffect(() => {
     fetchHubs();
@@ -182,6 +184,16 @@ const AdminDashboard = () => {
     // Filter by starred
     if (showStarredOnly) {
       filtered = filtered.filter(c => c.starred);
+    }
+    
+    // Filter by anonymous
+    if (showAnonymousOnly) {
+      filtered = filtered.filter(c => c.is_anonymous);
+    }
+    
+    // Filter by urgency
+    if (urgencyFilter !== "All") {
+      filtered = filtered.filter(c => c.urgency === urgencyFilter);
     }
     
     return filtered
@@ -467,6 +479,76 @@ const AdminDashboard = () => {
                     </Badge>
                   </Button>
                 </div>
+
+                <div className="flex gap-2 flex-wrap items-center">
+                  <span className="text-sm text-muted-foreground">Filters:</span>
+                  <Button
+                    variant={showAnonymousOnly ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setShowAnonymousOnly(!showAnonymousOnly)}
+                    className="gap-2"
+                  >
+                    <AlertCircle className="h-3.5 w-3.5" />
+                    Anonymous
+                    <Badge variant="secondary" className="ml-1">
+                      {complaints.filter(c => c.is_anonymous).length}
+                    </Badge>
+                  </Button>
+                  
+                  <div className="h-4 w-px bg-border" />
+                  
+                  <Button
+                    variant={urgencyFilter === "All" ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setUrgencyFilter("All")}
+                  >
+                    All Urgency
+                  </Button>
+                  <Button
+                    variant={urgencyFilter === "Low" ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setUrgencyFilter("Low")}
+                    className="gap-2"
+                  >
+                    Low
+                    <Badge variant="secondary" className="ml-1">
+                      {complaints.filter(c => c.urgency === "Low").length}
+                    </Badge>
+                  </Button>
+                  <Button
+                    variant={urgencyFilter === "Normal" ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setUrgencyFilter("Normal")}
+                    className="gap-2"
+                  >
+                    Normal
+                    <Badge variant="secondary" className="ml-1">
+                      {complaints.filter(c => c.urgency === "Normal").length}
+                    </Badge>
+                  </Button>
+                  <Button
+                    variant={urgencyFilter === "High" ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setUrgencyFilter("High")}
+                    className="gap-2"
+                  >
+                    High
+                    <Badge variant="secondary" className="ml-1">
+                      {complaints.filter(c => c.urgency === "High").length}
+                    </Badge>
+                  </Button>
+                  <Button
+                    variant={urgencyFilter === "Critical" ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setUrgencyFilter("Critical")}
+                    className="gap-2"
+                  >
+                    Critical
+                    <Badge variant="secondary" className="ml-1">
+                      {complaints.filter(c => c.urgency === "Critical").length}
+                    </Badge>
+                  </Button>
+                </div>
               </div>
 
               {getNewComplaints().length === 0 ? (
@@ -475,7 +557,11 @@ const AdminDashboard = () => {
                     <TrendingUp className="h-12 w-12 mx-auto mb-4 opacity-50" />
                     <p>
                       {showStarredOnly 
-                        ? "No starred complaints" 
+                        ? "No starred complaints match the filters" 
+                        : showAnonymousOnly
+                        ? "No anonymous complaints match the filters"
+                        : urgencyFilter !== "All"
+                        ? `No ${urgencyFilter.toLowerCase()} urgency complaints match the filters`
                         : statusFilter === "All"
                         ? "No complaints yet"
                         : `No ${statusFilter.toLowerCase()} complaints`}
