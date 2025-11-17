@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { LogOut, Filter, TrendingUp, Building2, Plus, ArrowRight, Download, MessageSquare, AlertCircle } from "lucide-react";
+import { LogOut, Filter, TrendingUp, Building2, Plus, ArrowRight, Download, MessageSquare, AlertCircle, Star } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import * as XLSX from 'xlsx';
 import { ThemeToggle } from "@/components/ThemeToggle";
@@ -29,6 +29,7 @@ import {
 } from "@/components/ui/select";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 const AdminDashboard = () => {
   const { signOut, user } = useAuth();
@@ -44,6 +45,7 @@ const AdminDashboard = () => {
   const [newHub, setNewHub] = useState({ name: "", location: "" });
   const [chatDialogOpen, setChatDialogOpen] = useState(false);
   const [chatComplaint, setChatComplaint] = useState<any>(null);
+  const [showStarredOnly, setShowStarredOnly] = useState(false);
 
   useEffect(() => {
     fetchHubs();
@@ -169,10 +171,35 @@ const AdminDashboard = () => {
   };
 
   const getNewComplaints = () => {
-    return complaints
+    const filtered = complaints
       .filter(c => c.status === "Pending")
       .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
       .slice(0, 10);
+    
+    if (showStarredOnly) {
+      return filtered.filter(c => c.starred);
+    }
+    return filtered;
+  };
+
+  const toggleStar = async (complaintId: string, currentStarred: boolean) => {
+    try {
+      const { error } = await supabase
+        .from("complaints")
+        .update({ starred: !currentStarred })
+        .eq("id", complaintId);
+
+      if (error) throw error;
+
+      // Update local state
+      setComplaints(complaints.map(c => 
+        c.id === complaintId ? { ...c, starred: !currentStarred } : c
+      ));
+
+      toast.success(currentStarred ? "Removed from starred" : "Added to starred");
+    } catch (error) {
+      toast.error("Failed to update star status");
+    }
   };
 
   const downloadHubComplaints = (hubId: string, status: 'Pending' | 'Resolved', e: React.MouseEvent) => {
@@ -322,122 +349,122 @@ const AdminDashboard = () => {
             {/* Left Side - Hub Cards */}
             <div className="col-span-12 lg:col-span-4 space-y-3">
               <h2 className="text-lg font-bold mb-3">Hubs</h2>
-              {hubs.map((hub) => {
-                const stats = getHubStats(hub.id);
-                
-                return (
-                  <Card 
-                    key={hub.id} 
-                    className="p-4 bg-gradient-card cursor-pointer hover:shadow-lg transition-all group"
-                    onClick={() => navigate(`/admin/hub/${hub.id}`)}
-                  >
-                    <div className="flex items-start justify-between mb-3">
-                      <div className="flex-1">
-                        <h3 className="text-base font-bold flex items-center gap-2">
-                          <Building2 className="h-4 w-4 text-primary" />
-                          {hub.name}
-                        </h3>
-                        {hub.location && (
-                          <p className="text-xs text-muted-foreground mt-0.5">{hub.location}</p>
-                        )}
-                      </div>
-                      <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all" />
-                    </div>
-                    <div className="flex gap-3 mb-3">
-                      <div className="text-center">
-                        <p className="text-xl font-bold">{stats.total}</p>
-                        <p className="text-xs text-muted-foreground">Total</p>
-                      </div>
-                      <div className="text-center">
-                        <p className="text-xl font-bold text-warning">{stats.pending}</p>
-                        <p className="text-xs text-muted-foreground">Pending</p>
-                      </div>
-                      <div className="text-center">
-                        <p className="text-xl font-bold text-success">{stats.resolved}</p>
-                        <p className="text-xs text-muted-foreground">Resolved</p>
-                      </div>
-                    </div>
-                    <div className="flex gap-2 border-t pt-3">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="flex-1 h-8 text-xs"
-                        onClick={(e) => downloadHubComplaints(hub.id, 'Pending', e)}
+              <ScrollArea className="h-[calc(100vh-320px)]">
+                <div className="space-y-3 pr-4">
+                  {hubs.map((hub) => {
+                    const stats = getHubStats(hub.id);
+                    
+                    return (
+                      <Card 
+                        key={hub.id} 
+                        className="p-4 bg-gradient-card cursor-pointer hover:shadow-lg transition-all group"
+                        onClick={() => navigate(`/admin/hub/${hub.id}`)}
                       >
-                        <Download className="h-3 w-3 mr-1" />
-                        Pending
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="flex-1 h-8 text-xs"
-                        onClick={(e) => downloadHubComplaints(hub.id, 'Resolved', e)}
-                      >
-                        <Download className="h-3 w-3 mr-1" />
-                        Resolved
-                      </Button>
-                    </div>
-                  </Card>
-                );
-              })}
+...
+                      </Card>
+                    );
+                  })}
+                </div>
+              </ScrollArea>
             </div>
 
             {/* Right Side - New Complaints */}
             <div className="col-span-12 lg:col-span-8">
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-xl font-bold">Recent Pending Complaints</h2>
-                <Badge variant="secondary" className="text-lg px-4 py-2">
-                  {getNewComplaints().length} New
-                </Badge>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant={showStarredOnly ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setShowStarredOnly(!showStarredOnly)}
+                    className="gap-2"
+                  >
+                    <Star className={`h-4 w-4 ${showStarredOnly ? "fill-current" : ""}`} />
+                    {showStarredOnly ? "Show All" : "Starred Only"}
+                  </Button>
+                  <Badge variant="secondary" className="text-lg px-4 py-2">
+                    {getNewComplaints().length} {showStarredOnly ? "Starred" : "New"}
+                  </Badge>
+                </div>
               </div>
 
               {getNewComplaints().length === 0 ? (
                 <Card className="p-12 bg-gradient-card">
                   <div className="text-center text-muted-foreground">
                     <TrendingUp className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                    <p>No pending complaints</p>
+                    <p>{showStarredOnly ? "No starred complaints" : "No pending complaints"}</p>
                   </div>
                 </Card>
               ) : (
-                <div className="space-y-4">
-                  {getNewComplaints().map((complaint) => (
-                    <Card 
-                      key={complaint.id}
-                      className="p-4 bg-gradient-card hover:shadow-md transition-shadow"
-                    >
-                      <div className="flex items-start gap-4">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-2">
-                            <h3 className="font-semibold">{complaint.title}</h3>
-                            <Badge variant="outline">{complaint.category}</Badge>
-                            <Badge variant="secondary">Pending</Badge>
+                <ScrollArea className="h-[calc(100vh-320px)]">
+                  <div className="space-y-4 pr-4">
+                    {getNewComplaints().map((complaint) => (
+                      <Card 
+                        key={complaint.id}
+                        className="p-4 bg-gradient-card hover:shadow-md transition-shadow"
+                      >
+                        <div className="flex items-start gap-4">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              toggleStar(complaint.id, complaint.starred);
+                            }}
+                            className="shrink-0"
+                          >
+                            <Star 
+                              className={`h-5 w-5 ${complaint.starred ? "fill-warning text-warning" : "text-muted-foreground"}`} 
+                            />
+                          </Button>
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-2 flex-wrap">
+                              <h3 className="font-semibold">{complaint.title}</h3>
+                              <Badge variant="outline">{complaint.category}</Badge>
+                              <Badge variant="secondary">Pending</Badge>
+                              {complaint.urgency && complaint.urgency !== "Normal" && (
+                                <Badge
+                                  variant="outline"
+                                  className={
+                                    complaint.urgency === "Critical"
+                                      ? "bg-destructive/10 text-destructive border-destructive/50 animate-pulse gap-1"
+                                      : complaint.urgency === "High"
+                                      ? "bg-orange-500/10 text-orange-600 dark:text-orange-400 border-orange-500/50"
+                                      : "bg-slate-500/10 text-slate-600 dark:text-slate-400 border-slate-500/50"
+                                  }
+                                >
+                                  {complaint.urgency === "Critical" && <AlertCircle className="h-3 w-3" />}
+                                  {complaint.urgency}
+                                </Badge>
+                              )}
+                            </div>
+                            <p className="text-sm text-muted-foreground line-clamp-2 mb-2">
+                              {complaint.description}
+                            </p>
+                            <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                              <span>Student: {complaint.is_anonymous ? "Anonymous Student" : profiles[complaint.student_id] || "Unknown"}</span>
+                              <span>•</span>
+                              <span>Hub: {hubs.find(h => h.id === complaint.hub_id)?.name || "N/A"}</span>
+                              <span>•</span>
+                              <span>{new Date(complaint.created_at).toLocaleDateString()}</span>
+                            </div>
                           </div>
-                          <p className="text-sm text-muted-foreground line-clamp-2 mb-2">
-                            {complaint.description}
-                          </p>
-                          <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                            <span>Student: {profiles[complaint.student_id]}</span>
-                            <span>•</span>
-                            <span>Hub: {hubs.find(h => h.id === complaint.hub_id)?.name || "N/A"}</span>
-                            <span>•</span>
-                            <span>{new Date(complaint.created_at).toLocaleDateString()}</span>
-                          </div>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              setSelectedComplaint(complaint);
+                              setUpdateStatus(complaint.status);
+                              setResolutionNote(complaint.resolution_note || "");
+                            }}
+                          >
+                            View Details
+                          </Button>
                         </div>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => {
-                            setSelectedComplaint(complaint);
-                            setUpdateStatus(complaint.status);
-                            setResolutionNote(complaint.resolution_note || "");
-                          }}
-                        >
-                          View Details
-                        </Button>
-                      </div>
-                    </Card>
-                  ))}
-                </div>
+                      </Card>
+                    ))}
+                  </div>
+                </ScrollArea>
               )}
             </div>
           </div>
