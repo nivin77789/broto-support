@@ -46,6 +46,7 @@ const AdminDashboard = () => {
   const [chatDialogOpen, setChatDialogOpen] = useState(false);
   const [chatComplaint, setChatComplaint] = useState<any>(null);
   const [showStarredOnly, setShowStarredOnly] = useState(false);
+  const [statusFilter, setStatusFilter] = useState<"All" | "Pending" | "In Review" | "Resolved">("Pending");
 
   useEffect(() => {
     fetchHubs();
@@ -171,15 +172,21 @@ const AdminDashboard = () => {
   };
 
   const getNewComplaints = () => {
-    const filtered = complaints
-      .filter(c => c.status === "Pending")
-      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-      .slice(0, 10);
+    let filtered = complaints;
     
-    if (showStarredOnly) {
-      return filtered.filter(c => c.starred);
+    // Filter by status
+    if (statusFilter !== "All") {
+      filtered = filtered.filter(c => c.status === statusFilter);
     }
-    return filtered;
+    
+    // Filter by starred
+    if (showStarredOnly) {
+      filtered = filtered.filter(c => c.starred);
+    }
+    
+    return filtered
+      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+      .slice(0, 20);
   };
 
   const toggleStar = async (complaintId: string, currentStarred: boolean) => {
@@ -413,23 +420,68 @@ const AdminDashboard = () => {
               </ScrollArea>
             </div>
 
-            {/* Right Side - New Complaints */}
+            {/* Right Side - Complaints */}
             <div className="col-span-12 lg:col-span-8">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-bold">Recent Pending Complaints</h2>
-                <div className="flex items-center gap-2">
+              <div className="flex flex-col gap-4 mb-6">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-xl font-bold">Complaints</h2>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant={showStarredOnly ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setShowStarredOnly(!showStarredOnly)}
+                      className="gap-2"
+                    >
+                      <Star className={`h-4 w-4 ${showStarredOnly ? "fill-current" : ""}`} />
+                      {showStarredOnly ? "Show All" : "Starred"}
+                    </Button>
+                    <Badge variant="secondary" className="text-lg px-4 py-2">
+                      {getNewComplaints().length}
+                    </Badge>
+                  </div>
+                </div>
+                
+                <div className="flex gap-2 flex-wrap">
                   <Button
-                    variant={showStarredOnly ? "default" : "outline"}
+                    variant={statusFilter === "All" ? "default" : "outline"}
                     size="sm"
-                    onClick={() => setShowStarredOnly(!showStarredOnly)}
+                    onClick={() => setStatusFilter("All")}
+                  >
+                    All
+                  </Button>
+                  <Button
+                    variant={statusFilter === "Pending" ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setStatusFilter("Pending")}
                     className="gap-2"
                   >
-                    <Star className={`h-4 w-4 ${showStarredOnly ? "fill-current" : ""}`} />
-                    {showStarredOnly ? "Show All" : "Starred Only"}
+                    Pending
+                    <Badge variant="secondary" className="ml-1">
+                      {complaints.filter(c => c.status === "Pending").length}
+                    </Badge>
                   </Button>
-                  <Badge variant="secondary" className="text-lg px-4 py-2">
-                    {getNewComplaints().length} {showStarredOnly ? "Starred" : "New"}
-                  </Badge>
+                  <Button
+                    variant={statusFilter === "In Review" ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setStatusFilter("In Review")}
+                    className="gap-2"
+                  >
+                    In Review
+                    <Badge variant="secondary" className="ml-1">
+                      {complaints.filter(c => c.status === "In Review").length}
+                    </Badge>
+                  </Button>
+                  <Button
+                    variant={statusFilter === "Resolved" ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setStatusFilter("Resolved")}
+                    className="gap-2"
+                  >
+                    Resolved
+                    <Badge variant="secondary" className="ml-1">
+                      {complaints.filter(c => c.status === "Resolved").length}
+                    </Badge>
+                  </Button>
                 </div>
               </div>
 
@@ -437,11 +489,17 @@ const AdminDashboard = () => {
                 <Card className="p-12 bg-gradient-card">
                   <div className="text-center text-muted-foreground">
                     <TrendingUp className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                    <p>{showStarredOnly ? "No starred complaints" : "No pending complaints"}</p>
+                    <p>
+                      {showStarredOnly 
+                        ? "No starred complaints" 
+                        : statusFilter === "All"
+                        ? "No complaints yet"
+                        : `No ${statusFilter.toLowerCase()} complaints`}
+                    </p>
                   </div>
                 </Card>
               ) : (
-                <ScrollArea className="h-[calc(100vh-320px)]">
+                <ScrollArea className="h-[calc(100vh-380px)]">
                   <div className="space-y-4 pr-4">
                     {getNewComplaints().map((complaint) => (
                       <Card 
@@ -466,7 +524,18 @@ const AdminDashboard = () => {
                             <div className="flex items-center gap-2 mb-2 flex-wrap">
                               <h3 className="font-semibold">{complaint.title}</h3>
                               <Badge variant="outline">{complaint.category}</Badge>
-                              <Badge variant="secondary">Pending</Badge>
+                              <Badge 
+                                variant="outline"
+                                className={
+                                  complaint.status === "Pending"
+                                    ? "bg-warning/10 text-warning border-warning/20"
+                                    : complaint.status === "In Review"
+                                    ? "bg-primary/10 text-primary border-primary/20"
+                                    : "bg-success/10 text-success border-success/20"
+                                }
+                              >
+                                {complaint.status}
+                              </Badge>
                               {complaint.urgency && complaint.urgency !== "Normal" && (
                                 <Badge
                                   variant="outline"
