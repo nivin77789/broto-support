@@ -267,12 +267,8 @@ const AdminDashboard = () => {
       <header className="border-b bg-card">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <img src="/logo.png" alt="Logo" className="h-auto w-auto max-h-16" />
-            <div>
-              <h1 className="text-2xl font-bold bg-gradient-primary bg-clip-text text-transparent">
-                Admin Portal
-              </h1>
-              <p className="text-sm text-muted-foreground mt-1">Manage all complaints</p>
+            <div className="bg-white/[0.06] p-2 rounded-lg">
+              <img src="/logo.png" alt="Logo" className="h-auto w-auto max-h-16" />
             </div>
           </div>
           <div className="flex items-center gap-2">
