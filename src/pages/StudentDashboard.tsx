@@ -293,11 +293,8 @@ const StudentDashboard = () => {
       <header className="border-b bg-card">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="flex flex-col items-center gap-1">
-              <div className="bg-white/[0.06] p-2 rounded-lg">
-                <img src="/logo.png" alt="Logo" className="h-auto w-auto max-h-12" />
-              </div>
-              <span className="text-xs font-medium text-muted-foreground">Student Portal</span>
+            <div className="bg-white/[0.10] p-2 rounded-lg">
+              <img src="/logo.png" alt="Logo" className="h-auto w-auto max-h-12" />
             </div>
           </div>
           <div className="flex items-center gap-2">
