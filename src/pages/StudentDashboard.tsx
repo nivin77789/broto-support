@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Plus, LogOut, Filter, Pencil, Trash2, Upload, X, MessageSquare, AlertCircle } from "lucide-react";
+import { Plus, LogOut, Filter, Pencil, Trash2, Upload, X, MessageSquare, AlertCircle, Settings } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { ComplaintCard } from "@/components/ComplaintCard";
@@ -301,6 +301,10 @@ const StudentDashboard = () => {
             <Button variant="outline" size="sm" onClick={() => navigate("/student/chat")}>
               <MessageSquare className="h-4 w-4 mr-2" />
               Chats
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => navigate("/student/settings")}>
+              <Settings className="h-4 w-4 mr-2" />
+              Settings
             </Button>
             <ThemeToggle />
             <Button variant="ghost" size="icon" onClick={signOut}>
