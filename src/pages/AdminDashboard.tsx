@@ -365,7 +365,7 @@ const AdminDashboard = () => {
                     >
                       <AlertCircle className="h-3.5 w-3.5" />
                       Anonymous
-                      <Badge variant="secondary" className="ml-1">
+                      <Badge variant="outline" className="ml-1 bg-muted text-foreground">
                         {complaints.filter(c => c.is_anonymous).length}
                       </Badge>
                     </Button>
@@ -379,7 +379,7 @@ const AdminDashboard = () => {
                         <SelectItem value="Low">
                           <div className="flex items-center justify-between w-full">
                             <span>Low</span>
-                            <Badge variant="secondary" className="ml-2">
+                            <Badge variant="outline" className="ml-2 bg-muted text-foreground">
                               {complaints.filter(c => c.urgency === "Low").length}
                             </Badge>
                           </div>
@@ -387,7 +387,7 @@ const AdminDashboard = () => {
                         <SelectItem value="Normal">
                           <div className="flex items-center justify-between w-full">
                             <span>Normal</span>
-                            <Badge variant="secondary" className="ml-2">
+                            <Badge variant="outline" className="ml-2 bg-muted text-foreground">
                               {complaints.filter(c => c.urgency === "Normal").length}
                             </Badge>
                           </div>
@@ -395,7 +395,7 @@ const AdminDashboard = () => {
                         <SelectItem value="High">
                           <div className="flex items-center justify-between w-full">
                             <span>High</span>
-                            <Badge variant="secondary" className="ml-2">
+                            <Badge variant="outline" className="ml-2 bg-muted text-foreground">
                               {complaints.filter(c => c.urgency === "High").length}
                             </Badge>
                           </div>
@@ -403,7 +403,7 @@ const AdminDashboard = () => {
                         <SelectItem value="Critical">
                           <div className="flex items-center justify-between w-full">
                             <span>Critical</span>
-                            <Badge variant="secondary" className="ml-2">
+                            <Badge variant="outline" className="ml-2 bg-muted text-foreground">
                               {complaints.filter(c => c.urgency === "Critical").length}
                             </Badge>
                           </div>
@@ -411,7 +411,7 @@ const AdminDashboard = () => {
                       </SelectContent>
                     </Select>
                     
-                    <Badge variant="secondary" className="text-lg px-4 py-2">
+                    <Badge variant="outline" className="text-lg px-4 py-2 bg-primary text-primary-foreground">
                       {getNewComplaints().length}
                     </Badge>
                   </div>
@@ -425,39 +425,39 @@ const AdminDashboard = () => {
                   >
                     All
                   </Button>
-                  <Button
-                    variant={statusFilter === "Pending" ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setStatusFilter("Pending")}
-                    className="gap-2"
-                  >
-                    Pending
-                    <Badge variant="secondary" className="ml-1">
-                      {complaints.filter(c => c.status === "Pending").length}
-                    </Badge>
-                  </Button>
-                  <Button
-                    variant={statusFilter === "In Review" ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setStatusFilter("In Review")}
-                    className="gap-2"
-                  >
-                    In Review
-                    <Badge variant="secondary" className="ml-1">
-                      {complaints.filter(c => c.status === "In Review").length}
-                    </Badge>
-                  </Button>
-                  <Button
-                    variant={statusFilter === "Resolved" ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setStatusFilter("Resolved")}
-                    className="gap-2"
-                  >
-                    Resolved
-                    <Badge variant="secondary" className="ml-1">
-                      {complaints.filter(c => c.status === "Resolved").length}
-                    </Badge>
-                  </Button>
+                    <Button
+                      variant={statusFilter === "Pending" ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setStatusFilter("Pending")}
+                      className="gap-2"
+                    >
+                      Pending
+                      <Badge variant="outline" className="ml-1 bg-muted text-foreground">
+                        {complaints.filter(c => c.status === "Pending").length}
+                      </Badge>
+                    </Button>
+                    <Button
+                      variant={statusFilter === "In Review" ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setStatusFilter("In Review")}
+                      className="gap-2"
+                    >
+                      In Review
+                      <Badge variant="outline" className="ml-1 bg-muted text-foreground">
+                        {complaints.filter(c => c.status === "In Review").length}
+                      </Badge>
+                    </Button>
+                    <Button
+                      variant={statusFilter === "Resolved" ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setStatusFilter("Resolved")}
+                      className="gap-2"
+                    >
+                      Resolved
+                      <Badge variant="outline" className="ml-1 bg-muted text-foreground">
+                        {complaints.filter(c => c.status === "Resolved").length}
+                      </Badge>
+                    </Button>
                 </div>
               </div>
 
@@ -540,7 +540,7 @@ const AdminDashboard = () => {
                                 Student: {complaint.is_anonymous ? (
                                   <>
                                     Anonymous
-                                    <Badge variant="secondary" className="ml-1 text-xs">
+                                    <Badge variant="outline" className="ml-1 text-xs bg-muted text-foreground">
                                       {complaints.filter(c => c.is_anonymous).length}
                                     </Badge>
                                   </>
