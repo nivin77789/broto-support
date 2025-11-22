@@ -12,6 +12,7 @@ import AdminLogin from "./pages/AdminLogin";
 import StaffAuth from "./pages/StaffAuth";
 import StaffPending from "./pages/StaffPending";
 import StaffDashboard from "./pages/StaffDashboard";
+import StaffComplaints from "./pages/StaffComplaints";
 import StudentDashboard from "./pages/StudentDashboard";
 import StudentSettings from "./pages/StudentSettings";
 import AdminDashboard from "./pages/AdminDashboard";
@@ -43,6 +44,14 @@ const App = () => (
                 element={
                   <ProtectedRoute requiredRole="staff">
                     <StaffDashboard />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/staff/complaints"
+                element={
+                  <ProtectedRoute requiredRole="staff">
+                    <StaffComplaints />
                   </ProtectedRoute>
                 }
               />
