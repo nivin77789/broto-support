@@ -270,32 +270,35 @@ const AdminDashboard = () => {
       </header>
 
       <main className="container mx-auto px-4 py-8">
-        <div className="grid gap-3 md:grid-cols-4 mb-6">
-          {stats.map((stat) => (
-            <Card key={stat.label} className="p-4 bg-gradient-card">
-              <div className="flex items-center justify-between">
-                <div>
+        <div className="grid grid-cols-12 gap-6">
+          {/* Left Sidebar - Stats Cards */}
+          <div className="col-span-12 lg:col-span-2 space-y-3">
+            <h2 className="text-sm font-bold mb-2">Statistics</h2>
+            {stats.map((stat) => (
+              <Card key={stat.label} className="p-3 bg-gradient-card">
+                <div className="text-center">
+                  <div className={`h-8 w-8 rounded-full ${stat.color}/10 flex items-center justify-center mx-auto mb-2`}>
+                    <TrendingUp className={`h-4 w-4 ${stat.color.replace('bg-', 'text-')}`} />
+                  </div>
                   <p className="text-xs text-muted-foreground">{stat.label}</p>
-                  <p className="text-2xl font-bold mt-1">{stat.value}</p>
+                  <p className="text-xl font-bold mt-1">{stat.value}</p>
                 </div>
-                <div className={`h-10 w-10 rounded-full ${stat.color}/10 flex items-center justify-center`}>
-                  <TrendingUp className={`h-5 w-5 ${stat.color.replace('bg-', 'text-')}`} />
-                </div>
-              </div>
-            </Card>
-          ))}
-        </div>
-
-        {loading ? (
-          <div className="flex justify-center items-center h-64">
-            <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+              </Card>
+            ))}
           </div>
-        ) : (
-          <div className="grid grid-cols-12 gap-6">
-            {/* Left Side - Hub Cards */}
-            <div className="col-span-12 lg:col-span-3 space-y-3">
+
+          {/* Main Content - Hubs and Complaints */}
+          <div className="col-span-12 lg:col-span-10">
+            {loading ? (
+              <div className="flex justify-center items-center h-64">
+                <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+              </div>
+            ) : (
+              <div className="grid grid-cols-12 gap-6">
+                {/* Hubs Section */}
+                <div className="col-span-12 lg:col-span-3 space-y-3">
               <h2 className="text-lg font-bold mb-3">Hubs</h2>
-              <ScrollArea className="h-[calc(100vh-320px)]">
+              <ScrollArea className="h-[calc(100vh-180px)]">
                 <div className="space-y-3 pr-4">
                   {hubs.map((hub) => {
                     const stats = getHubStats(hub.id);
@@ -479,7 +482,7 @@ const AdminDashboard = () => {
                   </div>
                 </Card>
               ) : (
-                <ScrollArea className="h-[calc(100vh-380px)]">
+                <ScrollArea className="h-[calc(100vh-240px)]">
                   <div className="space-y-4 pr-4">
                     {getNewComplaints().map((complaint) => (
                       <Card 
@@ -567,16 +570,19 @@ const AdminDashboard = () => {
                           </Button>
                         </div>
                       </Card>
-                    ))}
-                  </div>
-                </ScrollArea>
-              )}
-            </div>
-          </div>
-        )}
+                ))}
+              </div>
+            </ScrollArea>
+          )}
+        </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
 
-        <Dialog open={!!selectedComplaint} onOpenChange={() => setSelectedComplaint(null)}>
-          <DialogContent className="max-w-2xl">
+<Dialog open={!!selectedComplaint} onOpenChange={() => setSelectedComplaint(null)}>
+  <DialogContent className="max-w-2xl">
             <DialogHeader>
               <DialogTitle>{selectedComplaint?.title}</DialogTitle>
             </DialogHeader>
@@ -676,9 +682,8 @@ const AdminDashboard = () => {
             )}
           </DialogContent>
         </Dialog>
-      </main>
-    </div>
-  );
-};
+      </div>
+    );
+  };
 
-export default AdminDashboard;
+  export default AdminDashboard;
