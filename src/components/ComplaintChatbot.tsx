@@ -29,18 +29,20 @@ export const ComplaintChatbot = ({ isOpen: controlledIsOpen, onOpenChange }: Com
   const [messages, setMessages] = useState<Message[]>([
     {
       role: "assistant",
-      content: "Hi! I'm here to help you draft your complaint. What seems to be the issue?"
+      content: "Hi! I'm here to help you. I can assist with fixing simple issues or help you draft a complaint if needed. What can I help you with?"
     }
   ]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const scrollRef = useRef<HTMLDivElement>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
 
   useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-    }
-  }, [messages]);
+    scrollToBottom();
+  }, [messages, isLoading]);
 
   const streamChat = async (userMessage: Message) => {
     const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/complaint-chat`;
@@ -158,7 +160,7 @@ export const ComplaintChatbot = ({ isOpen: controlledIsOpen, onOpenChange }: Com
         </Button>
       </div>
 
-      <ScrollArea className="flex-1 p-4" ref={scrollRef}>
+      <ScrollArea className="flex-1 p-4">
         <div className="space-y-4">
           {messages.map((message, index) => (
             <div
@@ -183,6 +185,7 @@ export const ComplaintChatbot = ({ isOpen: controlledIsOpen, onOpenChange }: Com
               </div>
             </div>
           )}
+          <div ref={messagesEndRef} />
         </div>
       </ScrollArea>
 
