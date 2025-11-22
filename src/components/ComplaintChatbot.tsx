@@ -10,8 +10,22 @@ interface Message {
   content: string;
 }
 
-export const ComplaintChatbot = () => {
-  const [isOpen, setIsOpen] = useState(false);
+interface ComplaintChatbotProps {
+  isOpen?: boolean;
+  onOpenChange?: (open: boolean) => void;
+}
+
+export const ComplaintChatbot = ({ isOpen: controlledIsOpen, onOpenChange }: ComplaintChatbotProps = {}) => {
+  const [internalIsOpen, setInternalIsOpen] = useState(false);
+  
+  const isOpen = controlledIsOpen !== undefined ? controlledIsOpen : internalIsOpen;
+  const setIsOpen = (open: boolean) => {
+    if (onOpenChange) {
+      onOpenChange(open);
+    } else {
+      setInternalIsOpen(open);
+    }
+  };
   const [messages, setMessages] = useState<Message[]>([
     {
       role: "assistant",
