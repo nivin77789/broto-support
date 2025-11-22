@@ -9,6 +9,9 @@ import { ProtectedRoute } from "@/components/ProtectedRoute";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import AdminLogin from "./pages/AdminLogin";
+import StaffAuth from "./pages/StaffAuth";
+import StaffPending from "./pages/StaffPending";
+import StaffDashboard from "./pages/StaffDashboard";
 import StudentDashboard from "./pages/StudentDashboard";
 import StudentSettings from "./pages/StudentSettings";
 import AdminDashboard from "./pages/AdminDashboard";
@@ -33,6 +36,16 @@ const App = () => (
               <Route path="/" element={<Index />} />
               <Route path="/auth" element={<Auth />} />
               <Route path="/admin/login" element={<AdminLogin />} />
+              <Route path="/staff/auth" element={<StaffAuth />} />
+              <Route path="/staff/pending" element={<StaffPending />} />
+              <Route
+                path="/staff"
+                element={
+                  <ProtectedRoute requiredRole="staff">
+                    <StaffDashboard />
+                  </ProtectedRoute>
+                }
+              />
               <Route
                 path="/student"
                 element={

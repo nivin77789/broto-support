@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, Plus, Trash2, Palette, Lock, Building2, BookOpen, Users } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, Palette, Lock, Building2, BookOpen, Users, UserCheck } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -48,6 +48,7 @@ const AdminSettings = () => {
   const [hubs, setHubs] = useState<any[]>([]);
   const [courses, setCourses] = useState<any[]>([]);
   const [staff, setStaff] = useState<any[]>([]);
+  const [pendingStaff, setPendingStaff] = useState<any[]>([]);
   const [newHub, setNewHub] = useState({ name: "", location: "" });
   const [newCourse, setNewCourse] = useState("");
   const [newStaff, setNewStaff] = useState({ name: "", email: "", role_name: "", hub_id: "", phone: "" });
@@ -64,6 +65,7 @@ const AdminSettings = () => {
     fetchHubs();
     fetchCourses();
     fetchStaff();
+    fetchPendingStaff();
     loadTheme();
   }, []);
 
@@ -105,12 +107,71 @@ const AdminSettings = () => {
   };
 
   const fetchStaff = async () => {
-    const { data, error } = await supabase.from("staff").select("*, hubs(name)").order("name");
+    const { data, error } = await supabase.from("staff").select("*, hubs(name)").eq("verified", true).order("name");
     if (error) {
       toast.error("Failed to fetch staff");
     } else {
       setStaff(data || []);
     }
+  };
+
+  const fetchPendingStaff = async () => {
+    const { data, error } = await supabase.from("staff").select("*, hubs(name)").eq("verified", false).order("created_at", { ascending: false });
+    if (error) {
+      toast.error("Failed to fetch pending staff");
+    } else {
+      setPendingStaff(data || []);
+    }
+  };
+
+  const handleApproveStaff = async (staffId: string, userId: string) => {
+    // Update staff verified status
+    const { error: staffError } = await supabase
+      .from("staff")
+      .update({ verified: true })
+      .eq("id", staffId);
+
+    if (staffError) {
+      toast.error("Failed to approve staff");
+      return;
+    }
+
+    // Add staff role to user_roles
+    const { error: roleError } = await supabase
+      .from("user_roles")
+      .insert({ user_id: userId, role: "staff" });
+
+    if (roleError) {
+      toast.error("Failed to assign staff role");
+      return;
+    }
+
+    toast.success("Staff approved successfully!");
+    fetchPendingStaff();
+    fetchStaff();
+  };
+
+  const handleRejectStaff = async (staffId: string, userId: string) => {
+    // Delete staff record
+    const { error: staffError } = await supabase
+      .from("staff")
+      .delete()
+      .eq("id", staffId);
+
+    if (staffError) {
+      toast.error("Failed to reject staff");
+      return;
+    }
+
+    // Delete the auth user
+    const { error: authError } = await supabase.auth.admin.deleteUser(userId);
+
+    if (authError) {
+      console.error("Failed to delete auth user:", authError);
+    }
+
+    toast.success("Staff application rejected");
+    fetchPendingStaff();
   };
 
   const handleAddHub = async (e: React.FormEvent) => {
@@ -288,7 +349,16 @@ const AdminSettings = () => {
 
       <main className="container mx-auto px-4 py-8">
         <Tabs defaultValue="hubs" className="w-full">
-          <TabsList className="grid w-full grid-cols-3 lg:grid-cols-5 mb-8">
+          <TabsList className="grid w-full grid-cols-3 lg:grid-cols-6 mb-8">
+            <TabsTrigger value="pending" className="gap-2">
+              <UserCheck className="h-4 w-4" />
+              Pending
+              {pendingStaff.length > 0 && (
+                <Badge variant="destructive" className="ml-1 h-5 px-1.5 text-xs">
+                  {pendingStaff.length}
+                </Badge>
+              )}
+            </TabsTrigger>
             <TabsTrigger value="hubs" className="gap-2">
               <Building2 className="h-4 w-4" />
               Hubs
@@ -310,6 +380,58 @@ const AdminSettings = () => {
               Password
             </TabsTrigger>
           </TabsList>
+
+          {/* Pending Verifications Tab */}
+          <TabsContent value="pending" className="space-y-6">
+            <Card className="p-6">
+              <h2 className="text-xl font-bold mb-4">Pending Staff Verifications</h2>
+              {pendingStaff.length === 0 ? (
+                <p className="text-muted-foreground text-center py-8">No pending verifications</p>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {pendingStaff.map((member) => (
+                    <Card key={member.id} className="p-4 border-2 border-yellow-500/20 bg-yellow-500/5">
+                      <div className="space-y-3">
+                        <div>
+                          <h3 className="font-semibold">{member.name}</h3>
+                          <p className="text-sm text-muted-foreground">{member.email}</p>
+                        </div>
+                        <div className="space-y-1">
+                          <Badge variant="outline" className="text-xs">{member.role_name}</Badge>
+                          {member.hubs && (
+                            <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                              <Building2 className="h-3 w-3" />
+                              {member.hubs.name}
+                            </div>
+                          )}
+                          {member.phone && (
+                            <p className="text-xs text-muted-foreground">{member.phone}</p>
+                          )}
+                        </div>
+                        <div className="flex gap-2 pt-2">
+                          <Button
+                            size="sm"
+                            onClick={() => handleApproveStaff(member.id, member.user_id)}
+                            className="flex-1 bg-green-600 hover:bg-green-700"
+                          >
+                            Approve
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="destructive"
+                            onClick={() => handleRejectStaff(member.id, member.user_id)}
+                            className="flex-1"
+                          >
+                            Reject
+                          </Button>
+                        </div>
+                      </div>
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </Card>
+          </TabsContent>
 
           {/* Hubs Tab */}
           <TabsContent value="hubs" className="space-y-6">

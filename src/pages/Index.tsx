@@ -11,7 +11,8 @@ const Index = () => {
 
   useEffect(() => {
     if (!loading && user && userRole) {
-      navigate(userRole === "admin" ? "/admin" : "/student");
+      const redirectPath = userRole === "admin" ? "/admin" : userRole === "staff" ? "/staff" : "/student";
+      navigate(redirectPath);
     }
   }, [user, userRole, loading, navigate]);
 
@@ -50,6 +51,14 @@ const Index = () => {
             </Button>
             <Button
               size="lg"
+              variant="outline"
+              onClick={() => navigate("/staff/auth")}
+              className="text-lg px-8 py-6"
+            >
+              Staff Portal
+            </Button>
+            <Button
+              size="lg"
               variant="destructive"
               onClick={() => navigate("/admin/login")}
               className="text-lg px-8 py-6"
@@ -59,7 +68,7 @@ const Index = () => {
           </div>
 
           <p className="text-sm text-muted-foreground mb-16 animate-fade-in">
-            Students: Sign up or sign in • Admins: Use dedicated portal
+            Students & Staff: Sign up or sign in • Admins: Use dedicated portal
           </p>
 
           <div className="grid md:grid-cols-3 gap-8 mt-16">
