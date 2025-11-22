@@ -16,6 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/contexts/AuthContext";
 
 const staffSignupSchema = z.object({
@@ -27,7 +28,13 @@ const staffSignupSchema = z.object({
   hub_id: z.string().min(1, "Hub selection is required"),
 });
 
+const staffSigninSchema = z.object({
+  email: z.string().trim().email("Invalid email address").max(255, "Email too long"),
+  password: z.string().min(1, "Password is required"),
+});
+
 const StaffAuth = () => {
+  const [activeTab, setActiveTab] = useState("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
@@ -36,7 +43,7 @@ const StaffAuth = () => {
   const [hubId, setHubId] = useState("");
   const [loading, setLoading] = useState(false);
   const [hubs, setHubs] = useState<any[]>([]);
-  const { user } = useAuth();
+  const { user, signIn } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -51,7 +58,57 @@ const StaffAuth = () => {
     setHubs(data || []);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSignin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+
+    try {
+      const validatedData = staffSigninSchema.parse({ email, password });
+
+      const { error } = await signIn(validatedData.email, validatedData.password);
+
+      if (error) {
+        if (error.message.includes("Invalid login credentials")) {
+          toast.error("Invalid email or password");
+        } else {
+          toast.error(error.message);
+        }
+        return;
+      }
+
+      // Check if staff record exists and is verified
+      const { data: staffData } = await supabase
+        .from("staff")
+        .select("verified")
+        .eq("email", validatedData.email)
+        .single();
+
+      if (!staffData) {
+        toast.error("No staff record found. Please sign up first.");
+        await supabase.auth.signOut();
+        return;
+      }
+
+      if (!staffData.verified) {
+        toast.info("Your account is pending admin verification");
+        navigate("/staff/pending");
+        return;
+      }
+
+      toast.success("Welcome back!");
+      navigate("/staff");
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        toast.error(error.errors[0].message);
+      } else {
+        toast.error("An unexpected error occurred");
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
@@ -65,7 +122,6 @@ const StaffAuth = () => {
         hub_id: hubId,
       });
 
-      // Create auth user
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: validatedData.email,
         password: validatedData.password,
@@ -85,7 +141,6 @@ const StaffAuth = () => {
         return;
       }
 
-      // Insert staff record
       const { error: staffError } = await supabase.from("staff").insert({
         user_id: authData.user.id,
         email: validatedData.email,
@@ -129,112 +184,158 @@ const StaffAuth = () => {
       <Card className="w-full max-w-md p-8 bg-gradient-card shadow-lg">
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold mb-2 bg-gradient-primary bg-clip-text text-transparent">
-            Staff Signup
+            Staff Portal
           </h1>
           <p className="text-muted-foreground">
-            Create your staff account
+            Sign in or create your staff account
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="name">Full Name</Label>
-            <Input
-              id="name"
-              type="text"
-              placeholder="John Doe"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              required
-              maxLength={100}
-            />
-          </div>
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <TabsList className="grid w-full grid-cols-2 mb-6">
+            <TabsTrigger value="signin">Sign In</TabsTrigger>
+            <TabsTrigger value="signup">Sign Up</TabsTrigger>
+          </TabsList>
 
-          <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              type="email"
-              placeholder="staff@example.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              maxLength={255}
-            />
-          </div>
+          <TabsContent value="signin">
+            <form onSubmit={handleSignin} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="signin-email">Email</Label>
+                <Input
+                  id="signin-email"
+                  type="email"
+                  placeholder="staff@example.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  maxLength={255}
+                />
+              </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="phone">Phone Number</Label>
-            <Input
-              id="phone"
-              type="tel"
-              placeholder="+91 1234567890"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              required
-              maxLength={15}
-            />
-          </div>
+              <div className="space-y-2">
+                <Label htmlFor="signin-password">Password</Label>
+                <Input
+                  id="signin-password"
+                  type="password"
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                />
+              </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="role">Role/Position</Label>
-            <Input
-              id="role"
-              type="text"
-              placeholder="e.g., Hub Manager, Mentor"
-              value={roleName}
-              onChange={(e) => setRoleName(e.target.value)}
-              required
-              maxLength={100}
-            />
-          </div>
+              <Button
+                type="submit"
+                className="w-full bg-gradient-primary hover:opacity-90 transition-opacity"
+                disabled={loading}
+              >
+                {loading ? "Signing in..." : "Sign In"}
+              </Button>
+            </form>
+          </TabsContent>
 
-          <div className="space-y-2">
-            <Label htmlFor="hub">Hub</Label>
-            <Select value={hubId} onValueChange={setHubId} required>
-              <SelectTrigger>
-                <SelectValue placeholder="Select your hub" />
-              </SelectTrigger>
-              <SelectContent>
-                {hubs.filter(hub => hub.id).map((hub) => (
-                  <SelectItem key={hub.id} value={hub.id}>
-                    {hub.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          <TabsContent value="signup">
+            <form onSubmit={handleSignup} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="name">Full Name</Label>
+                <Input
+                  id="name"
+                  type="text"
+                  placeholder="John Doe"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  required
+                  maxLength={100}
+                />
+              </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
-            <Input
-              id="password"
-              type="password"
-              placeholder="••••••••"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              minLength={6}
-            />
-          </div>
+              <div className="space-y-2">
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="staff@example.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  maxLength={255}
+                />
+              </div>
 
-          <Button
-            type="submit"
-            className="w-full bg-gradient-primary hover:opacity-90 transition-opacity"
-            disabled={loading}
-          >
-            {loading ? "Creating account..." : "Sign Up as Staff"}
-          </Button>
-        </form>
+              <div className="space-y-2">
+                <Label htmlFor="phone">Phone Number</Label>
+                <Input
+                  id="phone"
+                  type="tel"
+                  placeholder="+91 1234567890"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  required
+                  maxLength={15}
+                />
+              </div>
 
-        <div className="mt-4 p-3 bg-muted/50 rounded-lg border border-border">
-          <div className="flex gap-2">
-            <AlertCircle className="h-4 w-4 text-muted-foreground shrink-0 mt-0.5" />
-            <p className="text-xs text-muted-foreground">
-              Your account will need to be verified by an admin before you can access the staff portal.
-            </p>
-          </div>
-        </div>
+              <div className="space-y-2">
+                <Label htmlFor="role">Role/Position</Label>
+                <Input
+                  id="role"
+                  type="text"
+                  placeholder="e.g., Hub Manager, Mentor"
+                  value={roleName}
+                  onChange={(e) => setRoleName(e.target.value)}
+                  required
+                  maxLength={100}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="hub">Hub</Label>
+                <Select value={hubId} onValueChange={setHubId} required>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select your hub" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {hubs.filter(hub => hub.id).map((hub) => (
+                      <SelectItem key={hub.id} value={hub.id}>
+                        {hub.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="password">Password</Label>
+                <Input
+                  id="password"
+                  type="password"
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  minLength={6}
+                />
+              </div>
+
+              <Button
+                type="submit"
+                className="w-full bg-gradient-primary hover:opacity-90 transition-opacity"
+                disabled={loading}
+              >
+                {loading ? "Creating account..." : "Sign Up as Staff"}
+              </Button>
+            </form>
+
+            <div className="mt-4 p-3 bg-muted/50 rounded-lg border border-border">
+              <div className="flex gap-2">
+                <AlertCircle className="h-4 w-4 text-muted-foreground shrink-0 mt-0.5" />
+                <p className="text-xs text-muted-foreground">
+                  Your account will need to be verified by an admin before you can access the staff portal.
+                </p>
+              </div>
+            </div>
+          </TabsContent>
+        </Tabs>
       </Card>
     </div>
   );
