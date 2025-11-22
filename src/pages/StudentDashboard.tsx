@@ -313,11 +313,8 @@ const StudentDashboard = () => {
       <main className="container mx-auto px-4 py-8">
         {/* AI Chatbot Card */}
         <div className="mb-8">
-          <button 
-            onClick={() => setChatbotOpen(true)}
-            className="w-full bg-gradient-to-br from-primary/10 via-primary/5 to-background border-2 border-primary/20 rounded-xl p-6 shadow-lg hover:shadow-xl hover:border-primary/30 transition-all cursor-pointer text-left"
-          >
-            <div className="flex items-start justify-between gap-4">
+          <div className="w-full bg-gradient-to-br from-primary/10 via-primary/5 to-background border-2 border-primary/20 rounded-xl p-6 shadow-lg hover:shadow-xl hover:border-primary/30 transition-all">
+            <div className="flex flex-col md:flex-row items-start justify-between gap-4">
               <div className="flex-1">
                 <div className="flex items-center gap-3 mb-3">
                   <div className="bg-primary/20 p-2 rounded-lg">
@@ -332,7 +329,7 @@ const StudentDashboard = () => {
                   Our AI assistant can help you articulate your concerns clearly and professionally. 
                   Get suggestions on categories, urgency levels, and how to structure your complaint effectively.
                 </p>
-                <div className="flex gap-2 text-xs text-muted-foreground">
+                <div className="flex gap-2 text-xs text-muted-foreground flex-wrap">
                   <Badge variant="secondary" className="bg-primary/10">
                     💬 Real-time Chat
                   </Badge>
@@ -344,8 +341,18 @@ const StudentDashboard = () => {
                   </Badge>
                 </div>
               </div>
+              <div className="w-full md:w-auto flex md:flex-col items-center justify-center gap-2">
+                <Button 
+                  onClick={() => setChatbotOpen(true)}
+                  className="w-full md:w-auto bg-gradient-primary hover:opacity-90 transition-opacity"
+                  size="lg"
+                >
+                  <MessageSquare className="h-4 w-4 mr-2" />
+                  Start Chat
+                </Button>
+              </div>
             </div>
-          </button>
+          </div>
         </div>
 
         <div className="flex items-center justify-between mb-6">
