@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/ThemeToggle";
-import { LogOut, User, Building2, Mail, Phone } from "lucide-react";
+import { LogOut, User, Building2, Mail, Phone, FileText, Clock, AlertCircle, CheckCircle } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -14,6 +14,12 @@ const StaffDashboard = () => {
   const [staffProfile, setStaffProfile] = useState<any>(null);
   const [hub, setHub] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [complaintStats, setComplaintStats] = useState({
+    total: 0,
+    pending: 0,
+    inReview: 0,
+    resolved: 0,
+  });
 
   useEffect(() => {
     if (!user) {
@@ -40,6 +46,21 @@ const StaffDashboard = () => {
 
       setStaffProfile(staffData);
       setHub(staffData.hubs);
+      
+      // Fetch complaint statistics
+      const { data: complaints, error: complaintsError } = await supabase
+        .from("complaints")
+        .select("status")
+        .eq("hub_id", staffData.hub_id);
+
+      if (!complaintsError && complaints) {
+        setComplaintStats({
+          total: complaints.length,
+          pending: complaints.filter((c) => c.status === "Pending").length,
+          inReview: complaints.filter((c) => c.status === "In Review").length,
+          resolved: complaints.filter((c) => c.status === "Resolved").length,
+        });
+      }
     } catch (error: any) {
       toast.error("Failed to load profile");
     } finally {
@@ -78,10 +99,77 @@ const StaffDashboard = () => {
       </header>
 
       <main className="container mx-auto px-4 py-8">
-        <div className="max-w-4xl mx-auto space-y-6">
+        <div className="max-w-6xl mx-auto space-y-6">
+          {/* Complaint Statistics */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <Card className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground">Total Complaints</p>
+                  <p className="text-3xl font-bold">{complaintStats.total}</p>
+                </div>
+                <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
+                  <FileText className="h-6 w-6 text-primary" />
+                </div>
+              </div>
+            </Card>
+
+            <Card className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground">Pending</p>
+                  <p className="text-3xl font-bold">{complaintStats.pending}</p>
+                </div>
+                <div className="h-12 w-12 rounded-full bg-yellow-500/10 flex items-center justify-center">
+                  <Clock className="h-6 w-6 text-yellow-500" />
+                </div>
+              </div>
+            </Card>
+
+            <Card className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground">In Review</p>
+                  <p className="text-3xl font-bold">{complaintStats.inReview}</p>
+                </div>
+                <div className="h-12 w-12 rounded-full bg-blue-500/10 flex items-center justify-center">
+                  <AlertCircle className="h-6 w-6 text-blue-500" />
+                </div>
+              </div>
+            </Card>
+
+            <Card className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground">Resolved</p>
+                  <p className="text-3xl font-bold">{complaintStats.resolved}</p>
+                </div>
+                <div className="h-12 w-12 rounded-full bg-green-500/10 flex items-center justify-center">
+                  <CheckCircle className="h-6 w-6 text-green-500" />
+                </div>
+              </div>
+            </Card>
+          </div>
+
+          {/* Quick Actions */}
+          <Card className="p-6">
+            <h2 className="text-xl font-semibold mb-4">Quick Actions</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Button
+                size="lg"
+                onClick={() => navigate("/staff/complaints")}
+                className="h-auto py-6 flex-col gap-2"
+              >
+                <FileText className="h-6 w-6" />
+                <span>View & Manage Complaints</span>
+              </Button>
+            </div>
+          </Card>
+
+          {/* Profile Information */}
           <Card className="p-6">
             <h2 className="text-xl font-semibold mb-4">Profile Information</h2>
-            <div className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="flex items-center gap-3">
                 <User className="h-5 w-5 text-muted-foreground" />
                 <div>
@@ -122,14 +210,6 @@ const StaffDashboard = () => {
                 </div>
               </div>
             </div>
-          </Card>
-
-          <Card className="p-6">
-            <h2 className="text-xl font-semibold mb-4">Welcome to Staff Portal</h2>
-            <p className="text-muted-foreground">
-              Your account has been verified and you now have access to the staff portal. 
-              More features coming soon!
-            </p>
           </Card>
         </div>
       </main>
