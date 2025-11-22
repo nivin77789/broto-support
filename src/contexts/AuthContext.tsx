@@ -10,7 +10,7 @@ interface AuthContextType {
   signUp: (email: string, password: string, name: string, batch: string, hub_id: string, course_id: string) => Promise<{ error: any }>;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
-  userRole: "student" | "admin" | null;
+  userRole: "student" | "admin" | "staff" | null;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -19,7 +19,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
-  const [userRole, setUserRole] = useState<"student" | "admin" | null>(null);
+  const [userRole, setUserRole] = useState<"student" | "admin" | "staff" | null>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -62,10 +62,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
       if (error) throw error;
       
-      // If user has multiple roles, prioritize admin
+      // If user has multiple roles, prioritize admin > staff > student
       if (data && data.length > 0) {
         const hasAdmin = data.some(r => r.role === "admin");
-        setUserRole(hasAdmin ? "admin" : "student");
+        const hasStaff = data.some(r => r.role === "staff");
+        setUserRole(hasAdmin ? "admin" : hasStaff ? "staff" : "student");
       }
     } catch (error) {
       console.error("Error fetching user role:", error);

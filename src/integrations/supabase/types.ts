@@ -219,6 +219,8 @@ export type Database = {
           phone: string | null
           role_name: string
           updated_at: string | null
+          user_id: string | null
+          verified: boolean | null
         }
         Insert: {
           created_at?: string | null
@@ -229,6 +231,8 @@ export type Database = {
           phone?: string | null
           role_name: string
           updated_at?: string | null
+          user_id?: string | null
+          verified?: boolean | null
         }
         Update: {
           created_at?: string | null
@@ -239,6 +243,8 @@ export type Database = {
           phone?: string | null
           role_name?: string
           updated_at?: string | null
+          user_id?: string | null
+          verified?: boolean | null
         }
         Relationships: [
           {
@@ -293,7 +299,7 @@ export type Database = {
       }
     }
     Enums: {
-      app_role: "student" | "admin"
+      app_role: "student" | "admin" | "staff"
       complaint_category:
         | "Communication"
         | "Hub"
@@ -429,7 +435,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["student", "admin"],
+      app_role: ["student", "admin", "staff"],
       complaint_category: [
         "Communication",
         "Hub",
