@@ -243,7 +243,7 @@ const AdminDashboard = () => {
     <div className="min-h-screen bg-background">
       <header className="border-b bg-card">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
+      <div className="flex items-center gap-3">
             <div className="bg-white/[0.10] p-2 rounded-lg">
               <img src="/logo.png" alt="Logo" className="h-auto w-auto max-h-12" />
             </div>
@@ -259,7 +259,7 @@ const AdminDashboard = () => {
             </Button>
             <Button variant="outline" size="sm" onClick={() => navigate("/admin/settings")}>
               <Settings className="h-4 w-4 mr-2" />
-              Settings
+              Manage
             </Button>
             <ThemeToggle />
             <Button variant="ghost" size="icon" onClick={signOut}>

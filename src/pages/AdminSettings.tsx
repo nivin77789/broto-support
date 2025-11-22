@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, Plus, Trash2, Palette, Lock, Building2, BookOpen } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, Palette, Lock, Building2, BookOpen, Users } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -46,12 +46,14 @@ const AdminSettings = () => {
   const { user } = useAuth();
   const [hubs, setHubs] = useState<any[]>([]);
   const [courses, setCourses] = useState<any[]>([]);
+  const [staff, setStaff] = useState<any[]>([]);
   const [newHub, setNewHub] = useState({ name: "", location: "" });
   const [newCourse, setNewCourse] = useState("");
+  const [newStaff, setNewStaff] = useState({ name: "", email: "", role_name: "", hub_id: "", phone: "" });
   const [editingHub, setEditingHub] = useState<any>(null);
   const [editingCourse, setEditingCourse] = useState<any>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [itemToDelete, setItemToDelete] = useState<{ type: "hub" | "course"; id: string } | null>(null);
+  const [itemToDelete, setItemToDelete] = useState<{ type: "hub" | "course" | "staff"; id: string } | null>(null);
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -60,6 +62,7 @@ const AdminSettings = () => {
   useEffect(() => {
     fetchHubs();
     fetchCourses();
+    fetchStaff();
     loadTheme();
   }, []);
 
@@ -97,6 +100,15 @@ const AdminSettings = () => {
       toast.error("Failed to fetch courses");
     } else {
       setCourses(data || []);
+    }
+  };
+
+  const fetchStaff = async () => {
+    const { data, error } = await supabase.from("staff").select("*, hubs(name)").order("name");
+    if (error) {
+      toast.error("Failed to fetch staff");
+    } else {
+      setStaff(data || []);
     }
   };
 
@@ -183,21 +195,48 @@ const AdminSettings = () => {
   const handleDelete = async () => {
     if (!itemToDelete) return;
 
+    const table = itemToDelete.type === "hub" ? "hubs" : itemToDelete.type === "course" ? "courses" : "staff";
     const { error } = await supabase
-      .from(itemToDelete.type === "hub" ? "hubs" : "courses")
+      .from(table)
       .delete()
       .eq("id", itemToDelete.id);
 
     if (error) {
       toast.error(`Failed to delete ${itemToDelete.type}`);
     } else {
-      toast.success(`${itemToDelete.type === "hub" ? "Hub" : "Course"} deleted successfully`);
+      toast.success(`${itemToDelete.type.charAt(0).toUpperCase() + itemToDelete.type.slice(1)} deleted successfully`);
       if (itemToDelete.type === "hub") fetchHubs();
-      else fetchCourses();
+      else if (itemToDelete.type === "course") fetchCourses();
+      else fetchStaff();
     }
 
     setDeleteDialogOpen(false);
     setItemToDelete(null);
+  };
+
+  const handleAddStaff = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    const { error } = await supabase.from("staff").insert({
+      name: newStaff.name,
+      email: newStaff.email,
+      role_name: newStaff.role_name,
+      hub_id: newStaff.hub_id || null,
+      phone: newStaff.phone || null,
+    });
+
+    if (error) {
+      toast.error("Failed to add staff");
+    } else {
+      toast.success("Staff added successfully!");
+      setNewStaff({ name: "", email: "", role_name: "", hub_id: "", phone: "" });
+      fetchStaff();
+    }
+  };
+
+  const handleDeleteStaff = (id: string) => {
+    setItemToDelete({ type: "staff", id });
+    setDeleteDialogOpen(true);
   };
 
   const handleChangePassword = async (e: React.FormEvent) => {
@@ -239,7 +278,7 @@ const AdminSettings = () => {
               <img src="/logo.png" alt="Logo" className="h-auto w-auto max-h-12" />
             </div>
             <h1 className="text-2xl font-bold bg-gradient-primary bg-clip-text text-transparent">
-              Admin Settings
+              Manage
             </h1>
           </div>
           <ThemeToggle />
@@ -248,7 +287,7 @@ const AdminSettings = () => {
 
       <main className="container mx-auto px-4 py-8">
         <Tabs defaultValue="hubs" className="w-full">
-          <TabsList className="grid w-full grid-cols-2 lg:grid-cols-4 mb-8">
+          <TabsList className="grid w-full grid-cols-3 lg:grid-cols-5 mb-8">
             <TabsTrigger value="hubs" className="gap-2">
               <Building2 className="h-4 w-4" />
               Hubs
@@ -256,6 +295,10 @@ const AdminSettings = () => {
             <TabsTrigger value="courses" className="gap-2">
               <BookOpen className="h-4 w-4" />
               Courses
+            </TabsTrigger>
+            <TabsTrigger value="staff" className="gap-2">
+              <Users className="h-4 w-4" />
+              Staff
             </TabsTrigger>
             <TabsTrigger value="theme" className="gap-2">
               <Palette className="h-4 w-4" />
