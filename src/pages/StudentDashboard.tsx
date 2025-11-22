@@ -63,6 +63,7 @@ const StudentDashboard = () => {
   const [selectedComplaint, setSelectedComplaint] = useState<any>(null);
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [editingComplaint, setEditingComplaint] = useState<any>(null);
+  const [chatbotOpen, setChatbotOpen] = useState(false);
 
   const [formData, setFormData] = useState({
     title: "",
@@ -312,7 +313,10 @@ const StudentDashboard = () => {
       <main className="container mx-auto px-4 py-8">
         {/* AI Chatbot Card */}
         <div className="mb-8">
-          <div className="bg-gradient-to-br from-primary/10 via-primary/5 to-background border-2 border-primary/20 rounded-xl p-6 shadow-lg">
+          <button 
+            onClick={() => setChatbotOpen(true)}
+            className="w-full bg-gradient-to-br from-primary/10 via-primary/5 to-background border-2 border-primary/20 rounded-xl p-6 shadow-lg hover:shadow-xl hover:border-primary/30 transition-all cursor-pointer text-left"
+          >
             <div className="flex items-start justify-between gap-4">
               <div className="flex-1">
                 <div className="flex items-center gap-3 mb-3">
@@ -341,7 +345,7 @@ const StudentDashboard = () => {
                 </div>
               </div>
             </div>
-          </div>
+          </button>
         </div>
 
         <div className="flex items-center justify-between mb-6">
@@ -795,7 +799,7 @@ const StudentDashboard = () => {
           </AlertDialogContent>
         </AlertDialog>
       </main>
-      <ComplaintChatbot />
+      <ComplaintChatbot isOpen={chatbotOpen} onOpenChange={setChatbotOpen} />
     </div>
   );
 };
