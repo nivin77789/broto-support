@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { LogOut, Filter, TrendingUp, Building2, Plus, ArrowRight, Download, MessageSquare, AlertCircle, Star, BarChart3, Settings, Mail } from "lucide-react";
+import { LogOut, Filter, TrendingUp, Building2, Plus, ArrowRight, Download, MessageSquare, AlertCircle, Star, BarChart3, Settings, Mail, Users } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import * as XLSX from 'xlsx';
 import { ThemeToggle } from "@/components/ThemeToggle";
@@ -275,6 +275,10 @@ const AdminDashboard = () => {
             <Button variant="outline" size="sm" onClick={() => navigate("/admin/chat")}>
               <MessageSquare className="h-4 w-4 mr-2" />
               Chats
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => navigate("/admin/staff")}>
+              <Users className="h-4 w-4 mr-2" />
+              Staffs
             </Button>
             <Button variant="outline" size="sm" onClick={() => navigate("/admin/settings")}>
               <Settings className="h-4 w-4 mr-2" />

@@ -21,6 +21,7 @@ import AdminChat from "./pages/AdminChat";
 import StudentChat from "./pages/StudentChat";
 import Analytics from "./pages/Analytics";
 import AdminSettings from "./pages/AdminSettings";
+import AdminStaffVerification from "./pages/AdminStaffVerification";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -116,6 +117,14 @@ const App = () => (
                 element={
                   <ProtectedRoute requiredRole="admin">
                     <AdminSettings />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/staff"
+                element={
+                  <ProtectedRoute requiredRole="admin">
+                    <AdminStaffVerification />
                   </ProtectedRoute>
                 }
               />
