@@ -9,11 +9,22 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import { toast } from "sonner";
 import { AlertCircle } from "lucide-react";
 import { z } from "zod";
+import { supabase } from "@/integrations/supabase/client";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const authSchema = z.object({
   email: z.string().trim().email("Invalid email address").max(255, "Email too long"),
   password: z.string().min(6, "Password must be at least 6 characters"),
   name: z.string().trim().min(2, "Name must be at least 2 characters").max(100, "Name too long").optional(),
+  batch: z.string().trim().min(1, "Batch is required").optional(),
+  hub_id: z.string().min(1, "Hub selection is required").optional(),
+  course_id: z.string().min(1, "Course selection is required").optional(),
 });
 
 const Auth = () => {
@@ -21,9 +32,31 @@ const Auth = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
+  const [batch, setBatch] = useState("");
+  const [hubId, setHubId] = useState("");
+  const [courseId, setCourseId] = useState("");
   const [loading, setLoading] = useState(false);
+  const [hubs, setHubs] = useState<any[]>([]);
+  const [courses, setCourses] = useState<any[]>([]);
   const { signUp, signIn, user, userRole } = useAuth();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (isSignUp) {
+      fetchHubs();
+      fetchCourses();
+    }
+  }, [isSignUp]);
+
+  const fetchHubs = async () => {
+    const { data } = await supabase.from("hubs").select("*").order("name");
+    setHubs(data || []);
+  };
+
+  const fetchCourses = async () => {
+    const { data } = await supabase.from("courses").select("*").order("name");
+    setCourses(data || []);
+  };
 
   useEffect(() => {
     if (user && userRole) {
@@ -40,10 +73,20 @@ const Auth = () => {
         email,
         password,
         name: isSignUp ? name : undefined,
+        batch: isSignUp ? batch : undefined,
+        hub_id: isSignUp ? hubId : undefined,
+        course_id: isSignUp ? courseId : undefined,
       });
 
       const { error } = isSignUp
-        ? await signUp(validatedData.email, validatedData.password, validatedData.name || "")
+        ? await signUp(
+            validatedData.email,
+            validatedData.password,
+            validatedData.name || "",
+            validatedData.batch || "",
+            validatedData.hub_id || "",
+            validatedData.course_id || ""
+          )
         : await signIn(validatedData.email, validatedData.password);
 
       if (error) {
@@ -85,18 +128,65 @@ const Auth = () => {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           {isSignUp && (
-            <div className="space-y-2">
-              <Label htmlFor="name">Full Name</Label>
-              <Input
-                id="name"
-                type="text"
-                placeholder="John Doe"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                required
-                maxLength={100}
-              />
-            </div>
+            <>
+              <div className="space-y-2">
+                <Label htmlFor="name">Full Name</Label>
+                <Input
+                  id="name"
+                  type="text"
+                  placeholder="John Doe"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  required
+                  maxLength={100}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="batch">Batch</Label>
+                <Input
+                  id="batch"
+                  type="text"
+                  placeholder="e.g., Batch 45"
+                  value={batch}
+                  onChange={(e) => setBatch(e.target.value)}
+                  required
+                  maxLength={50}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="hub">Hub</Label>
+                <Select value={hubId} onValueChange={setHubId} required>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select your hub" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {hubs.map((hub) => (
+                      <SelectItem key={hub.id} value={hub.id}>
+                        {hub.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="course">Domain/Course</Label>
+                <Select value={courseId} onValueChange={setCourseId} required>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select your course" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {courses.map((course) => (
+                      <SelectItem key={course.id} value={course.id}>
+                        {course.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </>
           )}
 
           <div className="space-y-2">
