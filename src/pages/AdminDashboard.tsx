@@ -49,10 +49,14 @@ const AdminDashboard = () => {
   const [statusFilter, setStatusFilter] = useState<"All" | "Pending" | "In Review" | "Resolved">("Pending");
   const [showAnonymousOnly, setShowAnonymousOnly] = useState(false);
   const [urgencyFilter, setUrgencyFilter] = useState<"All" | "Low" | "Normal" | "High" | "Critical">("All");
+  const [courseDialogOpen, setCourseDialogOpen] = useState(false);
+  const [courses, setCourses] = useState<any[]>([]);
+  const [newCourse, setNewCourse] = useState("");
 
   useEffect(() => {
     fetchHubs();
     fetchComplaints();
+    fetchCourses();
   }, []);
 
   const fetchHubs = async () => {
@@ -66,6 +70,20 @@ const AdminDashboard = () => {
       setHubs(data || []);
     } catch (error: any) {
       toast.error("Failed to fetch hubs");
+    }
+  };
+
+  const fetchCourses = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("courses")
+        .select("*")
+        .order("name");
+
+      if (error) throw error;
+      setCourses(data || []);
+    } catch (error: any) {
+      toast.error("Failed to fetch courses");
     }
   };
 
@@ -129,6 +147,28 @@ const AdminDashboard = () => {
       fetchHubs();
     } catch (error: any) {
       toast.error(error.message || "Failed to add hub");
+    }
+  };
+
+  const handleAddCourse = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newCourse.trim()) {
+      toast.error("Course name is required");
+      return;
+    }
+
+    try {
+      const { error } = await supabase.from("courses").insert({
+        name: newCourse.trim(),
+      });
+
+      if (error) throw error;
+
+      toast.success("Course added successfully!");
+      setNewCourse("");
+      fetchCourses();
+    } catch (error: any) {
+      toast.error(error.message || "Failed to add course");
     }
   };
 
@@ -330,6 +370,50 @@ const AdminDashboard = () => {
                             <p className="font-medium">{hub.name}</p>
                             {hub.location && <p className="text-xs text-muted-foreground">{hub.location}</p>}
                           </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              </DialogContent>
+            </Dialog>
+            <Dialog open={courseDialogOpen} onOpenChange={setCourseDialogOpen}>
+              <DialogTrigger asChild>
+                <Button variant="outline" size="sm">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Manage Courses
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Manage Courses</DialogTitle>
+                </DialogHeader>
+                <form onSubmit={handleAddCourse} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="courseName">Course Name *</Label>
+                    <Input
+                      id="courseName"
+                      value={newCourse}
+                      onChange={(e) => setNewCourse(e.target.value)}
+                      placeholder="e.g., Flutter"
+                      required
+                      maxLength={100}
+                    />
+                  </div>
+                  <Button type="submit" className="w-full">
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add Course
+                  </Button>
+                </form>
+                <div className="mt-4">
+                  <Label>Existing Courses</Label>
+                  <div className="mt-2 space-y-2 max-h-60 overflow-y-auto">
+                    {courses.length === 0 ? (
+                      <p className="text-sm text-muted-foreground">No courses yet</p>
+                    ) : (
+                      courses.map((course) => (
+                        <div key={course.id} className="flex items-center justify-between p-2 border rounded">
+                          <p className="font-medium">{course.name}</p>
                         </div>
                       ))
                     )}

@@ -80,6 +80,27 @@ export type Database = {
           },
         ]
       }
+      courses: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       hubs: {
         Row: {
           created_at: string
@@ -145,24 +166,48 @@ export type Database = {
       }
       profiles: {
         Row: {
+          batch: string | null
+          course_id: string | null
           created_at: string | null
           email: string
+          hub_id: string | null
           id: string
           name: string
         }
         Insert: {
+          batch?: string | null
+          course_id?: string | null
           created_at?: string | null
           email: string
+          hub_id?: string | null
           id: string
           name: string
         }
         Update: {
+          batch?: string | null
+          course_id?: string | null
           created_at?: string | null
           email?: string
+          hub_id?: string | null
           id?: string
           name?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "profiles_hub_id_fkey"
+            columns: ["hub_id"]
+            isOneToOne: false
+            referencedRelation: "hubs"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {
