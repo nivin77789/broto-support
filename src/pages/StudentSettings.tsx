@@ -234,7 +234,7 @@ const StudentSettings = () => {
                   <div className="space-y-2">
                     <Label htmlFor="hub">Hub</Label>
                     <Select
-                      value={profile.hub_id}
+                      value={profile.hub_id || undefined}
                       onValueChange={(value) =>
                         setProfile({ ...profile, hub_id: value })
                       }
@@ -243,7 +243,7 @@ const StudentSettings = () => {
                         <SelectValue placeholder="Select hub" />
                       </SelectTrigger>
                       <SelectContent>
-                        {hubs.map((hub) => (
+                        {hubs.filter(hub => hub.id).map((hub) => (
                           <SelectItem key={hub.id} value={hub.id}>
                             {hub.name}
                           </SelectItem>
@@ -255,7 +255,7 @@ const StudentSettings = () => {
                   <div className="space-y-2">
                     <Label htmlFor="course">Course</Label>
                     <Select
-                      value={profile.course_id}
+                      value={profile.course_id || undefined}
                       onValueChange={(value) =>
                         setProfile({ ...profile, course_id: value })
                       }
@@ -264,7 +264,7 @@ const StudentSettings = () => {
                         <SelectValue placeholder="Select course" />
                       </SelectTrigger>
                       <SelectContent>
-                        {courses.map((course) => (
+                        {courses.filter(course => course.id).map((course) => (
                           <SelectItem key={course.id} value={course.id}>
                             {course.name}
                           </SelectItem>

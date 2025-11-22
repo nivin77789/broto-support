@@ -508,13 +508,12 @@ const AdminSettings = () => {
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="staffHub">Hub</Label>
-                    <Select value={newStaff.hub_id} onValueChange={(value) => setNewStaff({ ...newStaff, hub_id: value })}>
+                    <Select value={newStaff.hub_id || undefined} onValueChange={(value) => setNewStaff({ ...newStaff, hub_id: value })}>
                       <SelectTrigger>
                         <SelectValue placeholder="Select hub (optional)" />
                       </SelectTrigger>
                       <SelectContent className="bg-popover z-50">
-                        <SelectItem value="">No Hub</SelectItem>
-                        {hubs.map((hub) => (
+                        {hubs.filter(hub => hub.id).map((hub) => (
                           <SelectItem key={hub.id} value={hub.id}>
                             {hub.name}
                           </SelectItem>
