@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { LogOut, Filter, TrendingUp, Building2, Plus, ArrowRight, Download, MessageSquare, AlertCircle, Star, BarChart3, Settings } from "lucide-react";
+import { LogOut, Filter, TrendingUp, Building2, Plus, ArrowRight, Download, MessageSquare, AlertCircle, Star, BarChart3, Settings, Mail } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import * as XLSX from 'xlsx';
 import { ThemeToggle } from "@/components/ThemeToggle";
@@ -49,10 +49,15 @@ const AdminDashboard = () => {
   const [statusFilter, setStatusFilter] = useState<"All" | "Pending" | "In Review" | "Resolved">("Pending");
   const [showAnonymousOnly, setShowAnonymousOnly] = useState(false);
   const [urgencyFilter, setUrgencyFilter] = useState<"All" | "Low" | "Normal" | "High" | "Critical">("All");
+  const [staff, setStaff] = useState<any[]>([]);
+  const [forwardDialogOpen, setForwardDialogOpen] = useState(false);
+  const [selectedStaffId, setSelectedStaffId] = useState<string>("");
+  const [forwardingComplaint, setForwardingComplaint] = useState<any>(null);
 
   useEffect(() => {
     fetchHubs();
     fetchComplaints();
+    fetchStaff();
   }, []);
 
   const fetchHubs = async () => {
@@ -66,6 +71,20 @@ const AdminDashboard = () => {
       setHubs(data || []);
     } catch (error: any) {
       toast.error("Failed to fetch hubs");
+    }
+  };
+
+  const fetchStaff = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("staff")
+        .select("*, hubs(name)")
+        .order("name");
+
+      if (error) throw error;
+      setStaff(data || []);
+    } catch (error: any) {
+      toast.error("Failed to fetch staff");
     }
   };
 
@@ -629,13 +648,26 @@ const AdminDashboard = () => {
                   </div>
                 )}
 
-                <Button
-                  onClick={() => navigate(`/admin/chat?complaint=${selectedComplaint.id}`)}
-                  className="w-full bg-gradient-primary"
-                >
-                  <MessageSquare className="h-4 w-4 mr-2" />
-                  Chat with Student
-                </Button>
+                <div className="flex gap-2">
+                  <Button
+                    onClick={() => navigate(`/admin/chat?complaint=${selectedComplaint.id}`)}
+                    className="flex-1 bg-gradient-primary"
+                  >
+                    <MessageSquare className="h-4 w-4 mr-2" />
+                    Chat with Student
+                  </Button>
+                  <Button
+                    onClick={() => {
+                      setForwardingComplaint(selectedComplaint);
+                      setForwardDialogOpen(true);
+                    }}
+                    variant="outline"
+                    className="flex-1"
+                  >
+                    <Mail className="h-4 w-4 mr-2" />
+                    Forward
+                  </Button>
+                </div>
 
                 <div className="space-y-2">
                   <Label htmlFor="status">Update Status</Label>
@@ -671,6 +703,87 @@ const AdminDashboard = () => {
                   className="w-full bg-gradient-primary"
                 >
                   Update Complaint
+                </Button>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
+
+        <Dialog open={forwardDialogOpen} onOpenChange={setForwardDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Forward Complaint</DialogTitle>
+            </DialogHeader>
+            {forwardingComplaint && (
+              <div className="space-y-4">
+                <div>
+                  <Label>Complaint: {forwardingComplaint.title}</Label>
+                  <p className="text-sm text-muted-foreground mt-1">{forwardingComplaint.description}</p>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="staffSelect">Select Staff Member</Label>
+                  <Select value={selectedStaffId} onValueChange={setSelectedStaffId}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Choose a staff member" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-popover z-50">
+                      {staff.map((member) => (
+                        <SelectItem key={member.id} value={member.id}>
+                          <div className="flex flex-col">
+                            <span className="font-medium">{member.name}</span>
+                            <span className="text-xs text-muted-foreground">{member.role_name}</span>
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <Button
+                  onClick={async () => {
+                    if (!selectedStaffId) {
+                      toast.error("Please select a staff member");
+                      return;
+                    }
+
+                    const selectedStaff = staff.find(s => s.id === selectedStaffId);
+                    if (!selectedStaff) return;
+
+                    try {
+                      const complaintUrl = `${window.location.origin}/admin`;
+                      
+                      const { error } = await supabase.functions.invoke("forward-complaint", {
+                        body: {
+                          staffEmail: selectedStaff.email,
+                          staffName: selectedStaff.name,
+                          complaintTitle: forwardingComplaint.title,
+                          complaintDescription: forwardingComplaint.description,
+                          complaintCategory: forwardingComplaint.category,
+                          complaintStatus: forwardingComplaint.status,
+                          complaintUrgency: forwardingComplaint.urgency || "Normal",
+                          studentName: forwardingComplaint.is_anonymous 
+                            ? "Anonymous Student" 
+                            : profiles[forwardingComplaint.student_id] || "Unknown",
+                          createdAt: forwardingComplaint.created_at,
+                          complaintUrl,
+                        },
+                      });
+
+                      if (error) throw error;
+
+                      toast.success(`Complaint forwarded to ${selectedStaff.name}`);
+                      setForwardDialogOpen(false);
+                      setSelectedStaffId("");
+                      setForwardingComplaint(null);
+                    } catch (error: any) {
+                      console.error("Forward error:", error);
+                      toast.error("Failed to forward complaint");
+                    }
+                  }}
+                  className="w-full"
+                  disabled={!selectedStaffId}
+                >
+                  <Mail className="h-4 w-4 mr-2" />
+                  Send Email
                 </Button>
               </div>
             )}

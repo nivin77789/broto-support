@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ArrowLeft, Plus, Trash2, Palette, Lock, Building2, BookOpen, Users } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
@@ -462,6 +463,110 @@ const AdminSettings = () => {
                         </div>
                       </>
                     )}
+                  </Card>
+                ))}
+              </div>
+            </Card>
+          </TabsContent>
+
+          {/* Staff Tab */}
+          <TabsContent value="staff" className="space-y-6">
+            <Card className="p-6">
+              <h2 className="text-xl font-bold mb-4">Add New Staff</h2>
+              <form onSubmit={handleAddStaff} className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="staffName">Name *</Label>
+                    <Input
+                      id="staffName"
+                      value={newStaff.name}
+                      onChange={(e) => setNewStaff({ ...newStaff, name: e.target.value })}
+                      placeholder="e.g., John Doe"
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="staffEmail">Email *</Label>
+                    <Input
+                      id="staffEmail"
+                      type="email"
+                      value={newStaff.email}
+                      onChange={(e) => setNewStaff({ ...newStaff, email: e.target.value })}
+                      placeholder="e.g., john@example.com"
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="staffRole">Role *</Label>
+                    <Input
+                      id="staffRole"
+                      value={newStaff.role_name}
+                      onChange={(e) => setNewStaff({ ...newStaff, role_name: e.target.value })}
+                      placeholder="e.g., Coordinator, Manager"
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="staffHub">Hub</Label>
+                    <Select value={newStaff.hub_id} onValueChange={(value) => setNewStaff({ ...newStaff, hub_id: value })}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select hub (optional)" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-popover z-50">
+                        <SelectItem value="">No Hub</SelectItem>
+                        {hubs.map((hub) => (
+                          <SelectItem key={hub.id} value={hub.id}>
+                            {hub.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="staffPhone">Phone</Label>
+                    <Input
+                      id="staffPhone"
+                      value={newStaff.phone}
+                      onChange={(e) => setNewStaff({ ...newStaff, phone: e.target.value })}
+                      placeholder="e.g., +91 1234567890"
+                    />
+                  </div>
+                </div>
+                <Button type="submit" className="w-full md:w-auto">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Staff
+                </Button>
+              </form>
+            </Card>
+
+            <Card className="p-6">
+              <h2 className="text-xl font-bold mb-4">Existing Staff</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {staff.map((member) => (
+                  <Card key={member.id} className="p-4">
+                    <div className="space-y-2">
+                      <h3 className="font-semibold">{member.name}</h3>
+                      <p className="text-sm text-muted-foreground">{member.email}</p>
+                      <Badge variant="outline" className="text-xs">{member.role_name}</Badge>
+                      {member.hubs && (
+                        <p className="text-xs text-muted-foreground flex items-center gap-1">
+                          <Building2 className="h-3 w-3" />
+                          {member.hubs.name}
+                        </p>
+                      )}
+                      {member.phone && (
+                        <p className="text-xs text-muted-foreground">{member.phone}</p>
+                      )}
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        onClick={() => handleDeleteStaff(member.id)}
+                        className="w-full mt-2"
+                      >
+                        <Trash2 className="h-4 w-4 mr-2" />
+                        Remove
+                      </Button>
+                    </div>
                   </Card>
                 ))}
               </div>
