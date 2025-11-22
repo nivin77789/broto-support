@@ -266,11 +266,14 @@ const AdminDashboard = () => {
     <div className="min-h-screen bg-background">
       <header className="border-b bg-card">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold bg-gradient-primary bg-clip-text text-transparent">
-              Admin Portal
-            </h1>
-            <p className="text-sm text-muted-foreground mt-1">Manage all complaints</p>
+          <div className="flex items-center gap-3">
+            <img src="/logo.png" alt="Logo" className="h-10 w-10" />
+            <div>
+              <h1 className="text-2xl font-bold bg-gradient-primary bg-clip-text text-transparent">
+                Admin Portal
+              </h1>
+              <p className="text-sm text-muted-foreground mt-1">Manage all complaints</p>
+            </div>
           </div>
           <div className="flex items-center gap-2">
             <Button variant="outline" size="sm" onClick={() => navigate("/admin/analytics")}>
