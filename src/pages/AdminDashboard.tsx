@@ -612,7 +612,18 @@ const AdminDashboard = () => {
                               {complaint.description}
                             </p>
                             <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                              <span>Student: {complaint.is_anonymous ? "Anonymous Student" : profiles[complaint.student_id] || "Unknown"}</span>
+                              <span className="flex items-center gap-1">
+                                Student: {complaint.is_anonymous ? (
+                                  <>
+                                    Anonymous
+                                    <Badge variant="secondary" className="ml-1 text-xs">
+                                      {complaints.filter(c => c.is_anonymous).length}
+                                    </Badge>
+                                  </>
+                                ) : (
+                                  profiles[complaint.student_id] || "Unknown"
+                                )}
+                              </span>
                               <span>•</span>
                               <span>Hub: {hubs.find(h => h.id === complaint.hub_id)?.name || "N/A"}</span>
                               <span>•</span>
