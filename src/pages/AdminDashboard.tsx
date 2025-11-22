@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { LogOut, Filter, TrendingUp, Building2, Plus, ArrowRight, Download, MessageSquare, AlertCircle, Star, BarChart3 } from "lucide-react";
+import { LogOut, Filter, TrendingUp, Building2, Plus, ArrowRight, Download, MessageSquare, AlertCircle, Star, BarChart3, Settings } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import * as XLSX from 'xlsx';
 import { ThemeToggle } from "@/components/ThemeToggle";
@@ -49,14 +49,10 @@ const AdminDashboard = () => {
   const [statusFilter, setStatusFilter] = useState<"All" | "Pending" | "In Review" | "Resolved">("Pending");
   const [showAnonymousOnly, setShowAnonymousOnly] = useState(false);
   const [urgencyFilter, setUrgencyFilter] = useState<"All" | "Low" | "Normal" | "High" | "Critical">("All");
-  const [courseDialogOpen, setCourseDialogOpen] = useState(false);
-  const [courses, setCourses] = useState<any[]>([]);
-  const [newCourse, setNewCourse] = useState("");
 
   useEffect(() => {
     fetchHubs();
     fetchComplaints();
-    fetchCourses();
   }, []);
 
   const fetchHubs = async () => {
@@ -70,20 +66,6 @@ const AdminDashboard = () => {
       setHubs(data || []);
     } catch (error: any) {
       toast.error("Failed to fetch hubs");
-    }
-  };
-
-  const fetchCourses = async () => {
-    try {
-      const { data, error } = await supabase
-        .from("courses")
-        .select("*")
-        .order("name");
-
-      if (error) throw error;
-      setCourses(data || []);
-    } catch (error: any) {
-      toast.error("Failed to fetch courses");
     }
   };
 
@@ -126,51 +108,6 @@ const AdminDashboard = () => {
 
   const categories = ["Communication", "Hub", "Review", "Payments", "Others"];
 
-  const handleAddHub = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newHub.name.trim()) {
-      toast.error("Hub name is required");
-      return;
-    }
-
-    try {
-      const { error } = await supabase.from("hubs").insert({
-        name: newHub.name.trim(),
-        location: newHub.location.trim() || null,
-      });
-
-      if (error) throw error;
-
-      toast.success("Hub added successfully!");
-      setHubDialogOpen(false);
-      setNewHub({ name: "", location: "" });
-      fetchHubs();
-    } catch (error: any) {
-      toast.error(error.message || "Failed to add hub");
-    }
-  };
-
-  const handleAddCourse = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newCourse.trim()) {
-      toast.error("Course name is required");
-      return;
-    }
-
-    try {
-      const { error } = await supabase.from("courses").insert({
-        name: newCourse.trim(),
-      });
-
-      if (error) throw error;
-
-      toast.success("Course added successfully!");
-      setNewCourse("");
-      fetchCourses();
-    } catch (error: any) {
-      toast.error(error.message || "Failed to add course");
-    }
-  };
 
   const handleUpdateComplaint = async () => {
     if (!selectedComplaint || !updateStatus) return;
@@ -320,107 +257,10 @@ const AdminDashboard = () => {
               <MessageSquare className="h-4 w-4 mr-2" />
               Chats
             </Button>
-            <Dialog open={hubDialogOpen} onOpenChange={setHubDialogOpen}>
-              <DialogTrigger asChild>
-                <Button variant="outline" size="sm">
-                  <Building2 className="h-4 w-4 mr-2" />
-                  Manage Hubs
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Add New Hub</DialogTitle>
-                </DialogHeader>
-                <form onSubmit={handleAddHub} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="hubName">Hub Name *</Label>
-                    <Input
-                      id="hubName"
-                      value={newHub.name}
-                      onChange={(e) => setNewHub({ ...newHub, name: e.target.value })}
-                      placeholder="e.g., Kochi Hub"
-                      required
-                      maxLength={100}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="hubLocation">Location</Label>
-                    <Input
-                      id="hubLocation"
-                      value={newHub.location}
-                      onChange={(e) => setNewHub({ ...newHub, location: e.target.value })}
-                      placeholder="e.g., Infopark, Kochi"
-                      maxLength={200}
-                    />
-                  </div>
-                  <Button type="submit" className="w-full">
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add Hub
-                  </Button>
-                </form>
-                <div className="mt-4">
-                  <Label>Existing Hubs</Label>
-                  <div className="mt-2 space-y-2 max-h-40 overflow-y-auto">
-                    {hubs.length === 0 ? (
-                      <p className="text-sm text-muted-foreground">No hubs yet</p>
-                    ) : (
-                      hubs.map((hub) => (
-                        <div key={hub.id} className="flex items-center justify-between p-2 border rounded">
-                          <div>
-                            <p className="font-medium">{hub.name}</p>
-                            {hub.location && <p className="text-xs text-muted-foreground">{hub.location}</p>}
-                          </div>
-                        </div>
-                      ))
-                    )}
-                  </div>
-                </div>
-              </DialogContent>
-            </Dialog>
-            <Dialog open={courseDialogOpen} onOpenChange={setCourseDialogOpen}>
-              <DialogTrigger asChild>
-                <Button variant="outline" size="sm">
-                  <Plus className="h-4 w-4 mr-2" />
-                  Manage Courses
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Manage Courses</DialogTitle>
-                </DialogHeader>
-                <form onSubmit={handleAddCourse} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="courseName">Course Name *</Label>
-                    <Input
-                      id="courseName"
-                      value={newCourse}
-                      onChange={(e) => setNewCourse(e.target.value)}
-                      placeholder="e.g., Flutter"
-                      required
-                      maxLength={100}
-                    />
-                  </div>
-                  <Button type="submit" className="w-full">
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add Course
-                  </Button>
-                </form>
-                <div className="mt-4">
-                  <Label>Existing Courses</Label>
-                  <div className="mt-2 space-y-2 max-h-60 overflow-y-auto">
-                    {courses.length === 0 ? (
-                      <p className="text-sm text-muted-foreground">No courses yet</p>
-                    ) : (
-                      courses.map((course) => (
-                        <div key={course.id} className="flex items-center justify-between p-2 border rounded">
-                          <p className="font-medium">{course.name}</p>
-                        </div>
-                      ))
-                    )}
-                  </div>
-                </div>
-              </DialogContent>
-            </Dialog>
+            <Button variant="outline" size="sm" onClick={() => navigate("/admin/settings")}>
+              <Settings className="h-4 w-4 mr-2" />
+              Settings
+            </Button>
             <ThemeToggle />
             <Button variant="ghost" size="icon" onClick={signOut}>
               <LogOut className="h-5 w-5" />
@@ -453,7 +293,7 @@ const AdminDashboard = () => {
         ) : (
           <div className="grid grid-cols-12 gap-6">
             {/* Left Side - Hub Cards */}
-            <div className="col-span-12 lg:col-span-4 space-y-3">
+            <div className="col-span-12 lg:col-span-3 space-y-3">
               <h2 className="text-lg font-bold mb-3">Hubs</h2>
               <ScrollArea className="h-[calc(100vh-320px)]">
                 <div className="space-y-3 pr-4">
@@ -500,7 +340,7 @@ const AdminDashboard = () => {
             </div>
 
             {/* Right Side - Complaints */}
-            <div className="col-span-12 lg:col-span-8">
+            <div className="col-span-12 lg:col-span-9">
               <div className="flex flex-col gap-4 mb-6">
                 <div className="flex items-center justify-between flex-wrap gap-2">
                   <h2 className="text-xl font-bold">Complaints</h2>
