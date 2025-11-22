@@ -573,15 +573,15 @@ const AdminDashboard = () => {
                 ))}
               </div>
             </ScrollArea>
-          )}
-        </div>
-        </div>
+              )}
+            </div>
+          </div>
+        )}
       </div>
     </div>
-  </div>
-</main>
+  </main>
 
-<Dialog open={!!selectedComplaint} onOpenChange={() => setSelectedComplaint(null)}>
+  <Dialog open={!!selectedComplaint} onOpenChange={() => setSelectedComplaint(null)}>
   <DialogContent className="max-w-2xl">
             <DialogHeader>
               <DialogTitle>{selectedComplaint?.title}</DialogTitle>
