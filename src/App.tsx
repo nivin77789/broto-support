@@ -10,6 +10,7 @@ import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import AdminLogin from "./pages/AdminLogin";
 import StudentDashboard from "./pages/StudentDashboard";
+import StudentSettings from "./pages/StudentSettings";
 import AdminDashboard from "./pages/AdminDashboard";
 import HubDetails from "./pages/HubDetails";
 import AdminChat from "./pages/AdminChat";
@@ -37,6 +38,22 @@ const App = () => (
                 element={
                   <ProtectedRoute requiredRole="student">
                     <StudentDashboard />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/student/settings"
+                element={
+                  <ProtectedRoute requiredRole="student">
+                    <StudentSettings />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/student/chat"
+                element={
+                  <ProtectedRoute requiredRole="student">
+                    <StudentChat />
                   </ProtectedRoute>
                 }
               />
@@ -77,14 +94,6 @@ const App = () => (
                 element={
                   <ProtectedRoute requiredRole="admin">
                     <AdminSettings />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/student/chat"
-                element={
-                  <ProtectedRoute requiredRole="student">
-                    <StudentChat />
                   </ProtectedRoute>
                 }
               />
