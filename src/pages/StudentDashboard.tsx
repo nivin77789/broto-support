@@ -310,6 +310,40 @@ const StudentDashboard = () => {
       </header>
 
       <main className="container mx-auto px-4 py-8">
+        {/* AI Chatbot Card */}
+        <div className="mb-8">
+          <div className="bg-gradient-to-br from-primary/10 via-primary/5 to-background border-2 border-primary/20 rounded-xl p-6 shadow-lg">
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex-1">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="bg-primary/20 p-2 rounded-lg">
+                    <MessageSquare className="h-6 w-6 text-primary" />
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-semibold">AI Complaint Assistant</h2>
+                    <p className="text-sm text-muted-foreground">Get help drafting your complaint</p>
+                  </div>
+                </div>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Our AI assistant can help you articulate your concerns clearly and professionally. 
+                  Get suggestions on categories, urgency levels, and how to structure your complaint effectively.
+                </p>
+                <div className="flex gap-2 text-xs text-muted-foreground">
+                  <Badge variant="secondary" className="bg-primary/10">
+                    💬 Real-time Chat
+                  </Badge>
+                  <Badge variant="secondary" className="bg-primary/10">
+                    ✨ Smart Suggestions
+                  </Badge>
+                  <Badge variant="secondary" className="bg-primary/10">
+                    🔒 Private & Secure
+                  </Badge>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-2">
             <Filter className="h-5 w-5 text-muted-foreground" />
