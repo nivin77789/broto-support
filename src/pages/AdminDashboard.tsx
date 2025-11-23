@@ -53,11 +53,13 @@ const AdminDashboard = () => {
   const [forwardDialogOpen, setForwardDialogOpen] = useState(false);
   const [selectedStaffId, setSelectedStaffId] = useState<string>("");
   const [forwardingComplaint, setForwardingComplaint] = useState<any>(null);
+  const [pendingStaffCount, setPendingStaffCount] = useState(0);
 
   useEffect(() => {
     fetchHubs();
     fetchComplaints();
     fetchStaff();
+    fetchPendingStaffCount();
   }, []);
 
   const fetchHubs = async () => {
@@ -85,6 +87,20 @@ const AdminDashboard = () => {
       setStaff(data || []);
     } catch (error: any) {
       toast.error("Failed to fetch staff");
+    }
+  };
+
+  const fetchPendingStaffCount = async () => {
+    try {
+      const { count, error } = await supabase
+        .from("staff")
+        .select("*", { count: "exact", head: true })
+        .eq("verified", false);
+
+      if (error) throw error;
+      setPendingStaffCount(count || 0);
+    } catch (error: any) {
+      console.error("Failed to fetch pending staff count:", error);
     }
   };
 
@@ -276,9 +292,17 @@ const AdminDashboard = () => {
               <MessageSquare className="h-4 w-4 mr-2" />
               Chats
             </Button>
-            <Button variant="outline" size="sm" onClick={() => navigate("/admin/staff")}>
+            <Button variant="outline" size="sm" onClick={() => navigate("/admin/staff")} className="relative">
               <Users className="h-4 w-4 mr-2" />
               Staffs
+              {pendingStaffCount > 0 && (
+                <Badge 
+                  variant="destructive" 
+                  className="absolute -top-2 -right-2 h-5 w-5 p-0 flex items-center justify-center text-xs"
+                >
+                  {pendingStaffCount}
+                </Badge>
+              )}
             </Button>
             <Button variant="outline" size="sm" onClick={() => navigate("/admin/settings")}>
               <Settings className="h-4 w-4 mr-2" />
@@ -731,11 +755,13 @@ const AdminDashboard = () => {
                       <SelectValue placeholder="Choose a staff member" />
                     </SelectTrigger>
                     <SelectContent className="bg-popover z-50">
-                      {staff.map((member) => (
+                      {staff.filter(s => s.verified).map((member) => (
                         <SelectItem key={member.id} value={member.id}>
                           <div className="flex flex-col">
                             <span className="font-medium">{member.name}</span>
-                            <span className="text-xs text-muted-foreground">{member.role_name}</span>
+                            <span className="text-xs text-muted-foreground">
+                              {member.role_name} - {member.hubs?.name}
+                            </span>
                           </div>
                         </SelectItem>
                       ))}
@@ -753,6 +779,14 @@ const AdminDashboard = () => {
                     if (!selectedStaff) return;
 
                     try {
+                      // Update complaint to assign it to the staff's hub
+                      const { error: updateError } = await supabase
+                        .from("complaints")
+                        .update({ hub_id: selectedStaff.hub_id })
+                        .eq("id", forwardingComplaint.id);
+
+                      if (updateError) throw updateError;
+
                       const complaintUrl = `${window.location.origin}/admin`;
                       
                       const { error } = await supabase.functions.invoke("forward-complaint", {
@@ -774,10 +808,11 @@ const AdminDashboard = () => {
 
                       if (error) throw error;
 
-                      toast.success(`Complaint forwarded to ${selectedStaff.name}`);
+                      toast.success(`Complaint forwarded to ${selectedStaff.name} at ${selectedStaff.hubs?.name}`);
                       setForwardDialogOpen(false);
                       setSelectedStaffId("");
                       setForwardingComplaint(null);
+                      fetchComplaints(); // Refresh complaints
                     } catch (error: any) {
                       console.error("Forward error:", error);
                       toast.error("Failed to forward complaint");
@@ -787,7 +822,7 @@ const AdminDashboard = () => {
                   disabled={!selectedStaffId}
                 >
                   <Mail className="h-4 w-4 mr-2" />
-                  Send Email
+                  Forward to Staff
                 </Button>
               </div>
             )}
