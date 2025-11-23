@@ -3,10 +3,13 @@ import { useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/ThemeToggle";
-import { LogOut, User, Building2, Mail, Phone, FileText, Clock, AlertCircle, CheckCircle } from "lucide-react";
+import { LogOut, User, Building2, Mail, Phone, FileText, Clock, AlertCircle, CheckCircle, Filter } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { ComplaintCard } from "@/components/ComplaintCard";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
 
 const StaffDashboard = () => {
   const navigate = useNavigate();
@@ -20,6 +23,12 @@ const StaffDashboard = () => {
     inReview: 0,
     resolved: 0,
   });
+  const [complaints, setComplaints] = useState<any[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState("All");
+  const [selectedStatus, setSelectedStatus] = useState("All");
+
+  const categories = ["All", "Communication", "Hub", "Review", "Payments", "Others"];
+  const statuses = ["All", "Pending", "In Review", "Resolved"];
 
   useEffect(() => {
     if (!user) {
@@ -47,18 +56,24 @@ const StaffDashboard = () => {
       setStaffProfile(staffData);
       setHub(staffData.hubs);
       
-      // Fetch complaint statistics
-      const { data: complaints, error: complaintsError } = await supabase
+      // Fetch complaints
+      const { data: complaintsData, error: complaintsError } = await supabase
         .from("complaints")
-        .select("status")
-        .eq("hub_id", staffData.hub_id);
+        .select(`
+          *,
+          profiles:student_id (name, email, batch),
+          hubs (name)
+        `)
+        .eq("hub_id", staffData.hub_id)
+        .order("created_at", { ascending: false });
 
-      if (!complaintsError && complaints) {
+      if (!complaintsError && complaintsData) {
+        setComplaints(complaintsData);
         setComplaintStats({
-          total: complaints.length,
-          pending: complaints.filter((c) => c.status === "Pending").length,
-          inReview: complaints.filter((c) => c.status === "In Review").length,
-          resolved: complaints.filter((c) => c.status === "Resolved").length,
+          total: complaintsData.length,
+          pending: complaintsData.filter((c) => c.status === "Pending").length,
+          inReview: complaintsData.filter((c) => c.status === "In Review").length,
+          resolved: complaintsData.filter((c) => c.status === "Resolved").length,
         });
       }
     } catch (error: any) {
@@ -72,6 +87,12 @@ const StaffDashboard = () => {
     await signOut();
     navigate("/");
   };
+
+  const filteredComplaints = complaints.filter((complaint) => {
+    const categoryMatch = selectedCategory === "All" || complaint.category === selectedCategory;
+    const statusMatch = selectedStatus === "All" || complaint.status === selectedStatus;
+    return categoryMatch && statusMatch;
+  });
 
   if (loading) {
     return (
@@ -164,6 +185,79 @@ const StaffDashboard = () => {
                 <span>View & Manage Complaints</span>
               </Button>
             </div>
+          </Card>
+
+          {/* Complaints Section */}
+          <Card className="p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-semibold">Complaints for {hub?.name}</h2>
+              <Button onClick={() => navigate("/staff/complaints")} variant="outline">
+                View All
+              </Button>
+            </div>
+
+            {/* Filters */}
+            <div className="flex items-center gap-4 mb-6 p-4 bg-muted/50 rounded-lg">
+              <Filter className="h-5 w-5 text-muted-foreground" />
+              <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label>Category</Label>
+                  <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {categories.map((cat) => (
+                        <SelectItem key={cat} value={cat}>
+                          {cat}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>Status</Label>
+                  <Select value={selectedStatus} onValueChange={setSelectedStatus}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {statuses.map((status) => (
+                        <SelectItem key={status} value={status}>
+                          {status}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </div>
+
+            {/* Complaints Grid */}
+            {filteredComplaints.length === 0 ? (
+              <div className="text-center py-12">
+                <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <p className="text-muted-foreground">No complaints found</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {filteredComplaints.slice(0, 6).map((complaint) => (
+                  <ComplaintCard
+                    key={complaint.id}
+                    complaint={complaint}
+                    onClick={() => navigate("/staff/complaints")}
+                  />
+                ))}
+              </div>
+            )}
+            
+            {filteredComplaints.length > 6 && (
+              <div className="mt-4 text-center">
+                <Button onClick={() => navigate("/staff/complaints")} variant="link">
+                  View {filteredComplaints.length - 6} more complaints
+                </Button>
+              </div>
+            )}
           </Card>
 
           {/* Profile Information */}
