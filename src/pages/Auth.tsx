@@ -224,6 +224,16 @@ const Auth = () => {
           </Button>
         </form>
 
+        {!isSignUp && (
+          <div className="mt-6 p-4 bg-primary/10 rounded-lg border border-primary/20">
+            <p className="text-sm font-semibold text-center mb-2">Demo Student Credentials</p>
+            <div className="space-y-1 text-sm">
+              <p className="text-center"><span className="font-medium">Email:</span> student@example.com</p>
+              <p className="text-center"><span className="font-medium">Password:</span> student123</p>
+            </div>
+          </div>
+        )}
+
         <div className="mt-6 text-center">
           <button
             type="button"
