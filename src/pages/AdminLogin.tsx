@@ -67,7 +67,7 @@ const AdminLogin = () => {
       <div className="absolute top-4 right-4">
         <ThemeToggle />
       </div>
-      
+
       <div className="absolute top-4 left-4">
         <Button
           variant="ghost"
@@ -79,7 +79,7 @@ const AdminLogin = () => {
           Back
         </Button>
       </div>
-      
+
       <Card className="w-full max-w-md p-8 bg-gradient-card shadow-lg border-destructive/20">
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-destructive/10 mb-4">
@@ -136,7 +136,7 @@ const AdminLogin = () => {
               <p className="text-center"><span className="font-medium">Password:</span> Nivin77789@</p>
             </div>
           </div>
-          
+
           <div className="p-4 bg-destructive/10 rounded-lg border border-destructive/20">
             <p className="text-xs text-center text-muted-foreground">
               This portal is restricted to authorized administrators only.

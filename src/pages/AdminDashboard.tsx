@@ -46,7 +46,7 @@ const AdminDashboard = () => {
   const [chatDialogOpen, setChatDialogOpen] = useState(false);
   const [chatComplaint, setChatComplaint] = useState<any>(null);
   const [showStarredOnly, setShowStarredOnly] = useState(false);
-  const [statusFilter, setStatusFilter] = useState<"All" | "Pending" | "In Review" | "Resolved">("Pending");
+  const [statusFilter, setStatusFilter] = useState<"All" | "Pending" | "In Review" | "Resolved">("All");
   const [showAnonymousOnly, setShowAnonymousOnly] = useState(false);
   const [urgencyFilter, setUrgencyFilter] = useState<"All" | "Low" | "Normal" | "High" | "Critical">("All");
   const [staff, setStaff] = useState<any[]>([]);
@@ -187,27 +187,27 @@ const AdminDashboard = () => {
 
   const getNewComplaints = () => {
     let filtered = complaints;
-    
+
     // Filter by status
     if (statusFilter !== "All") {
       filtered = filtered.filter(c => c.status === statusFilter);
     }
-    
+
     // Filter by starred
     if (showStarredOnly) {
       filtered = filtered.filter(c => c.starred);
     }
-    
+
     // Filter by anonymous
     if (showAnonymousOnly) {
       filtered = filtered.filter(c => c.is_anonymous);
     }
-    
+
     // Filter by urgency
     if (urgencyFilter !== "All") {
       filtered = filtered.filter(c => c.urgency === urgencyFilter);
     }
-    
+
     return filtered
       .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
       .slice(0, 20);
@@ -223,7 +223,7 @@ const AdminDashboard = () => {
       if (error) throw error;
 
       // Update local state
-      setComplaints(complaints.map(c => 
+      setComplaints(complaints.map(c =>
         c.id === complaintId ? { ...c, starred: !currentStarred } : c
       ));
 
@@ -235,8 +235,8 @@ const AdminDashboard = () => {
 
   const downloadHubComplaints = (hubId: string, status: 'Pending' | 'Resolved', e: React.MouseEvent) => {
     e.stopPropagation();
-    
-    const hubComplaints = complaints.filter(c => 
+
+    const hubComplaints = complaints.filter(c =>
       c.hub_id === hubId && c.status === status
     );
 
@@ -260,10 +260,10 @@ const AdminDashboard = () => {
     const worksheet = XLSX.utils.json_to_sheet(excelData);
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, `${status} Complaints`);
-    
+
     const fileName = `${hub?.name || 'Hub'}_${status}_Complaints_${new Date().toISOString().split('T')[0]}.xlsx`;
     XLSX.writeFile(workbook, fileName);
-    
+
     toast.success(`Downloaded ${hubComplaints.length} ${status.toLowerCase()} complaints`);
   };
 
@@ -278,7 +278,7 @@ const AdminDashboard = () => {
     <div className="min-h-screen bg-background">
       <header className="border-b bg-card">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-      <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3">
             <div className="bg-white/[0.10] p-2 rounded-lg">
               <img src="/logo.png" alt="Logo" className="h-auto w-auto max-h-12" />
             </div>
@@ -296,8 +296,8 @@ const AdminDashboard = () => {
               <Users className="h-4 w-4 mr-2" />
               Staffs
               {pendingStaffCount > 0 && (
-                <Badge 
-                  variant="destructive" 
+                <Badge
+                  variant="destructive"
                   className="absolute -top-2 -right-2 h-5 w-5 p-0 flex items-center justify-center text-xs"
                 >
                   {pendingStaffCount}
@@ -346,10 +346,10 @@ const AdminDashboard = () => {
                 <div className="space-y-3 pr-4">
                   {hubs.map((hub) => {
                     const stats = getHubStats(hub.id);
-                    
+
                     return (
-                      <Card 
-                        key={hub.id} 
+                      <Card
+                        key={hub.id}
                         className="p-3 bg-gradient-card cursor-pointer hover:shadow-lg transition-all group"
                         onClick={() => navigate(`/admin/hub/${hub.id}`)}
                       >
@@ -401,9 +401,9 @@ const AdminDashboard = () => {
                       <Star className={`h-4 w-4 ${showStarredOnly ? "fill-current" : ""}`} />
                       {showStarredOnly ? "Show All" : "Starred"}
                     </Button>
-                    
+
                     <div className="h-6 w-px bg-border" />
-                    
+
                     <Button
                       variant={showAnonymousOnly ? "default" : "outline"}
                       size="sm"
@@ -416,7 +416,7 @@ const AdminDashboard = () => {
                         {complaints.filter(c => c.is_anonymous).length}
                       </Badge>
                     </Button>
-                    
+
                     <Select value={urgencyFilter} onValueChange={(value: any) => setUrgencyFilter(value)}>
                       <SelectTrigger className="w-[180px] h-9">
                         <SelectValue placeholder="Select urgency" />
@@ -457,13 +457,13 @@ const AdminDashboard = () => {
                         </SelectItem>
                       </SelectContent>
                     </Select>
-                    
+
                     <Badge variant="outline" className="text-lg px-4 py-2 bg-primary text-primary-foreground">
                       {getNewComplaints().length}
                     </Badge>
                   </div>
                 </div>
-                
+
                 <div className="flex gap-2 flex-wrap">
                   <Button
                     variant={statusFilter === "All" ? "default" : "outline"}
@@ -472,39 +472,39 @@ const AdminDashboard = () => {
                   >
                     All
                   </Button>
-                    <Button
-                      variant={statusFilter === "Pending" ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => setStatusFilter("Pending")}
-                      className="gap-2"
-                    >
-                      Pending
-                      <Badge variant="outline" className="ml-1 bg-muted text-foreground">
-                        {complaints.filter(c => c.status === "Pending").length}
-                      </Badge>
-                    </Button>
-                    <Button
-                      variant={statusFilter === "In Review" ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => setStatusFilter("In Review")}
-                      className="gap-2"
-                    >
-                      In Review
-                      <Badge variant="outline" className="ml-1 bg-muted text-foreground">
-                        {complaints.filter(c => c.status === "In Review").length}
-                      </Badge>
-                    </Button>
-                    <Button
-                      variant={statusFilter === "Resolved" ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => setStatusFilter("Resolved")}
-                      className="gap-2"
-                    >
-                      Resolved
-                      <Badge variant="outline" className="ml-1 bg-muted text-foreground">
-                        {complaints.filter(c => c.status === "Resolved").length}
-                      </Badge>
-                    </Button>
+                  <Button
+                    variant={statusFilter === "Pending" ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setStatusFilter("Pending")}
+                    className="gap-2"
+                  >
+                    Pending
+                    <Badge variant="outline" className="ml-1 bg-muted text-foreground">
+                      {complaints.filter(c => c.status === "Pending").length}
+                    </Badge>
+                  </Button>
+                  <Button
+                    variant={statusFilter === "In Review" ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setStatusFilter("In Review")}
+                    className="gap-2"
+                  >
+                    In Review
+                    <Badge variant="outline" className="ml-1 bg-muted text-foreground">
+                      {complaints.filter(c => c.status === "In Review").length}
+                    </Badge>
+                  </Button>
+                  <Button
+                    variant={statusFilter === "Resolved" ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setStatusFilter("Resolved")}
+                    className="gap-2"
+                  >
+                    Resolved
+                    <Badge variant="outline" className="ml-1 bg-muted text-foreground">
+                      {complaints.filter(c => c.status === "Resolved").length}
+                    </Badge>
+                  </Button>
                 </div>
               </div>
 
@@ -513,15 +513,15 @@ const AdminDashboard = () => {
                   <div className="text-center text-muted-foreground">
                     <TrendingUp className="h-12 w-12 mx-auto mb-4 opacity-50" />
                     <p>
-                      {showStarredOnly 
-                        ? "No starred complaints match the filters" 
+                      {showStarredOnly
+                        ? "No starred complaints match the filters"
                         : showAnonymousOnly
-                        ? "No anonymous complaints match the filters"
-                        : urgencyFilter !== "All"
-                        ? `No ${urgencyFilter.toLowerCase()} urgency complaints match the filters`
-                        : statusFilter === "All"
-                        ? "No complaints yet"
-                        : `No ${statusFilter.toLowerCase()} complaints`}
+                          ? "No anonymous complaints match the filters"
+                          : urgencyFilter !== "All"
+                            ? `No ${urgencyFilter.toLowerCase()} urgency complaints match the filters`
+                            : statusFilter === "All"
+                              ? "No complaints yet"
+                              : `No ${statusFilter.toLowerCase()} complaints`}
                     </p>
                   </div>
                 </Card>
@@ -529,7 +529,7 @@ const AdminDashboard = () => {
                 <ScrollArea className="h-[calc(100vh-380px)]">
                   <div className="space-y-4 pr-4">
                     {getNewComplaints().map((complaint) => (
-                      <Card 
+                      <Card
                         key={complaint.id}
                         className="p-4 bg-gradient-card hover:shadow-md transition-shadow"
                       >
@@ -543,22 +543,22 @@ const AdminDashboard = () => {
                             }}
                             className="shrink-0"
                           >
-                            <Star 
-                              className={`h-5 w-5 ${complaint.starred ? "fill-warning text-warning" : "text-muted-foreground"}`} 
+                            <Star
+                              className={`h-5 w-5 ${complaint.starred ? "fill-warning text-warning" : "text-muted-foreground"}`}
                             />
                           </Button>
                           <div className="flex-1">
                             <div className="flex items-center gap-2 mb-2 flex-wrap">
                               <h3 className="font-semibold">{complaint.title}</h3>
                               <Badge variant="outline">{complaint.category}</Badge>
-                              <Badge 
+                              <Badge
                                 variant="outline"
                                 className={
                                   complaint.status === "Pending"
                                     ? "bg-warning/10 text-warning border-warning/20"
                                     : complaint.status === "In Review"
-                                    ? "bg-primary/10 text-primary border-primary/20"
-                                    : "bg-success/10 text-success border-success/20"
+                                      ? "bg-primary/10 text-primary border-primary/20"
+                                      : "bg-success/10 text-success border-success/20"
                                 }
                               >
                                 {complaint.status}
@@ -570,8 +570,8 @@ const AdminDashboard = () => {
                                     complaint.urgency === "Critical"
                                       ? "bg-destructive/10 text-destructive border-destructive/50 animate-pulse gap-1"
                                       : complaint.urgency === "High"
-                                      ? "bg-orange-500/10 text-orange-600 dark:text-orange-400 border-orange-500/50"
-                                      : "bg-slate-500/10 text-slate-600 dark:text-slate-400 border-slate-500/50"
+                                        ? "bg-orange-500/10 text-orange-600 dark:text-orange-400 border-orange-500/50"
+                                        : "bg-slate-500/10 text-slate-600 dark:text-slate-400 border-slate-500/50"
                                   }
                                 >
                                   {complaint.urgency === "Critical" && <AlertCircle className="h-3 w-3" />}
@@ -639,8 +639,8 @@ const AdminDashboard = () => {
                         selectedComplaint.urgency === "Critical"
                           ? "bg-destructive/10 text-destructive border-destructive/50 animate-pulse gap-1"
                           : selectedComplaint.urgency === "High"
-                          ? "bg-orange-500/10 text-orange-600 dark:text-orange-400 border-orange-500/50"
-                          : "bg-slate-500/10 text-slate-600 dark:text-slate-400 border-slate-500/50"
+                            ? "bg-orange-500/10 text-orange-600 dark:text-orange-400 border-orange-500/50"
+                            : "bg-slate-500/10 text-slate-600 dark:text-slate-400 border-slate-500/50"
                       }
                     >
                       {selectedComplaint.urgency === "Critical" && <AlertCircle className="h-3 w-3" />}
@@ -657,8 +657,8 @@ const AdminDashboard = () => {
                 <div>
                   <Label>Hub</Label>
                   <p className="mt-2 text-sm font-medium">
-                    {selectedComplaint.hub_id 
-                      ? hubs.find(h => h.id === selectedComplaint.hub_id)?.name 
+                    {selectedComplaint.hub_id
+                      ? hubs.find(h => h.id === selectedComplaint.hub_id)?.name
                       : "Not specified"}
                   </p>
                 </div>
@@ -699,8 +699,8 @@ const AdminDashboard = () => {
 
                 <div className="space-y-2">
                   <Label htmlFor="status">Update Status</Label>
-                  <Select 
-                    value={updateStatus} 
+                  <Select
+                    value={updateStatus}
                     onValueChange={(value) => setUpdateStatus(value as "Pending" | "In Review" | "Resolved")}
                   >
                     <SelectTrigger>
@@ -788,7 +788,7 @@ const AdminDashboard = () => {
                       if (updateError) throw updateError;
 
                       const complaintUrl = `${window.location.origin}/admin`;
-                      
+
                       const { error } = await supabase.functions.invoke("forward-complaint", {
                         body: {
                           staffEmail: selectedStaff.email,
@@ -798,8 +798,8 @@ const AdminDashboard = () => {
                           complaintCategory: forwardingComplaint.category,
                           complaintStatus: forwardingComplaint.status,
                           complaintUrgency: forwardingComplaint.urgency || "Normal",
-                          studentName: forwardingComplaint.is_anonymous 
-                            ? "Anonymous Student" 
+                          studentName: forwardingComplaint.is_anonymous
+                            ? "Anonymous Student"
                             : profiles[forwardingComplaint.student_id] || "Unknown",
                           createdAt: forwardingComplaint.created_at,
                           complaintUrl,

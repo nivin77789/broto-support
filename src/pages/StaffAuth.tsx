@@ -180,7 +180,7 @@ const StaffAuth = () => {
           Back
         </Button>
       </div>
-      
+
       <Card className="w-full max-w-md p-8 bg-gradient-card shadow-lg">
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold mb-2 bg-gradient-primary bg-clip-text text-transparent">
